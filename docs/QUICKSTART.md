@@ -1,6 +1,7 @@
 # Quickstart — for people who have never used an AI assistant for this
 
-About 10 minutes. You need: a computer (macOS, Windows or Linux), your PDFs, and a Claude account with access to Claude Code.
+About 10 minutes. You need: a computer (macOS, Windows or Linux), your PDFs, and a paid Claude plan (Pro or higher)
+that includes Claude Code. Which plan, model and pace suit you: [RECOMMENDATIONS.md](RECOMMENDATIONS.md).
 
 ## 1. Install the Claude desktop app
 Download it from claude.ai/download, sign in. Open the **Code** tab — this is where Claude can work with files on your computer.

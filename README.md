@@ -43,10 +43,28 @@ Python packages (Claude will offer to install them): `pip install -r requirement
 New to AI tools? → **[docs/QUICKSTART.md](docs/QUICKSTART.md)** (10 minutes, no terminal needed).
 
 ## Use
-Open your project folder in Claude Code and say, in any language:
-- "Set up a paper database on robotic catheters" → a short interview, then a base adapted to your field.
-- "Add the new papers" → brief cards for everything in the inbox + a table asking which to analyse in depth.
-- "Analyse 2, 5 and 7 in depth" · "How did Smith2024 measure the modulus?" · "Compare the bending angle across papers" · "What has nobody tried?" · "Where should I publish this?"
+Open your project folder in Claude Code and talk to it in any language. Start with **"Set up a paper database on
+<your topic>"** — a short interview follows, then a base adapted to your field. Then **"Add the new papers"** — brief
+cards for everything in the inbox and a table asking which ones to analyse in depth (e.g. "2, 5 and 7").
+
+Examples of what to ask, by field:
+
+| Field | Set up | Then ask |
+|---|---|---|
+| Medical robotics | "…on tendon-driven robotic catheters for endovascular navigation" | "Compare tip bending angle and tip force across papers" · "How are the pull wires anchored, and which anchoring failed?" · "Which designs were tested in vivo, not only in phantoms?" |
+| Wearables / sensors | "…on sweat sensors for continuous glucose monitoring" | "Which sensors were validated against blood glucose, with how many subjects?" · "How is the sensing layer bonded to the patch?" |
+| Materials / chemistry | "…on self-healing conductive hydrogels" | "Plot conductivity against Young's modulus" · "Which healing chemistries work under water?" · "Write out how Smith2024 measured healing efficiency" |
+| Tissue engineering / biology | "…on maturation of iPSC-derived cardiomyocytes on soft substrates" | "Which substrate stiffness ranges were tested and what readouts changed?" · "Build a culture protocol checklist from the three most relevant papers" |
+| Mechanics / modelling | "…on hyperelastic and poroelastic models of brain tissue" | "Which constitutive models and parameters are used, at what strain rates?" · "Which models were validated against experiments?" |
+| Any field | — | "What has nobody tried yet?" · "Which labs work on this and who builds on whom?" · "Which journals publish this, and where should I submit my paper?" · "Explain how this base works" |
+
+**See a real base:** [docs/EXAMPLE-bioelectronics.md](docs/EXAMPLE-bioelectronics.md) — 100 papers on soft
+bioelectronic interfaces: a card, a structure graph, plots, journal analysis.
+
+![Conductivity across papers in the example base](docs/img/plot_metric_conductivity.png)
+
+**Before you start:** which subscription, which model and effort per step, how many papers per 5-hour window, Obsidian
+and Zotero → [docs/RECOMMENDATIONS.md](docs/RECOMMENDATIONS.md).
 
 How the base is organised, how categories and hubs are made and how to navigate them: **[docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md)**.
 Limits, privacy and honest use: **[docs/FAQ.md](docs/FAQ.md)**.
