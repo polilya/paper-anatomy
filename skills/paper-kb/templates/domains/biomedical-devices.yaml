@@ -1,0 +1,85 @@
+# Starter template: biomedical devices (implants, catheters, wearables, surgical robots, sensors).
+# A starting point only — setup extends it from your own papers.
+name: biomedical-devices
+description: Devices that act on or in the body; papers that build, model or test them.
+
+categories: [device, material, method, biology, simulation, clinical, review, thesis, off-topic]
+lenses: {material: design_rules, method: process_window, review: review_map}
+
+object_types:
+  device: {topology: assembly, description: "built object tested as a whole (catheter, implant, sensor patch)"}
+  thin-film device: {topology: stack, description: "layered device; elements = layers bottom to top"}
+  material: {topology: composition, description: "material developed for a device"}
+  model: {topology: model, description: "computational or analytical model of a device or its interaction with tissue"}
+
+tags:
+  materials: [silicone, polyurethane, Pebax, PTFE, nitinol, stainless steel, titanium, hydrogel, PDMS, parylene-C, polyimide, liquid-metal, conductive polymer]
+  methods: [3D-printing, injection-moulding, laser-cutting, extrusion, dip-coating, photolithography, braiding, reflow, FEM, control, machine-learning]
+  properties: [stiffness, flexibility, biocompatibility, sterilisability, MRI-compatible, radiopaque, long-term-stability, self-healing]
+  applications: [cardiovascular, neural, orthopaedic, endovascular, minimally-invasive-surgery, drug-delivery, monitoring, rehabilitation, in-vitro, in-vivo, clinical]
+
+element_roles: [body, shaft, tip, actuator, transmission, sensor, electrode, insulation, coating, housing, connector, power, electronics, control-unit, anchoring]
+functions:
+  - transmit force or torque
+  - bend or steer
+  - sense force or contact
+  - sense position or shape
+  - record a signal
+  - stimulate tissue
+  - deliver a substance
+  - insulate or seal
+  - anchor to tissue
+  - make visible in imaging
+link_methods:
+  crimping: mechanical
+  press-fit: mechanical
+  threading: mechanical
+  knot / suture: mechanical
+  adhesive bonding (epoxy): adhesive
+  UV-curing adhesive: adhesive
+  laser welding: thermal
+  thermal reflow: thermal
+  soldering: thermal
+  heat-shrink: thermal
+  overmoulding: mechanical
+  silane coupling: covalent
+  plasma bonding: covalent
+  wire bonding: electrical
+  conductive epoxy: electrical
+  luer / tubing fit: fluidic
+preparation_methods: [extrusion, braiding, coil winding, laser cutting, injection moulding, 3D printing, dip coating, spray coating, photolithography, electrospinning, shape-setting (heat treatment)]
+environment_entities: [vessel wall, blood, soft tissue, bone, nerve, skin, body fluid / PBS 37 °C, operator, robotic driver, fluoroscopy, MRI, ultrasound, sterilisation]
+
+quantities:
+  youngs_modulus: Pa
+  bending_stiffness: N*m2
+  force: N
+  torque: N*m
+  tip_force: N
+  bending_angle: deg
+  bending_radius: m
+  positioning_error: m
+  diameter: m
+  length: m
+  max_strain: "%"
+  fatigue_cycles: count
+  pressure: Pa
+  temperature_rise: K
+  impedance: ohm
+  response_time: s
+  frequency: Hz
+  biocompatibility: text
+  stability: text
+  other: text
+log_quantities: [youngs_modulus, bending_stiffness, impedance, fatigue_cycles]
+plot_pairs: [[diameter, bending_angle], [youngs_modulus, max_strain]]
+
+test_levels: [material, device, biological, model]
+test_types: [mechanical, electrical, electrochemical, chemical, structural, thermal, optical, adhesion, stability,
+             fatigue, sterilisation, imaging, phantom, ex-vivo, in-vivo, clinical, usability, simulation-validation, other]
+
+protocol_checklists:
+  mechanics: [test mode and standard, sample geometry and state (dry / wet, temperature), strain/force range and rate, which modulus or stiffness is reported, n and statistics]
+  phantom: [phantom material and its modulus, geometry vs anatomy, fluid and temperature, how position/force is measured, success criterion]
+  in-vivo: [animal model and number, duration, implantation procedure, readouts, controls, ethics approval]
+  fatigue: [loading mode, amplitude, frequency, environment, failure criterion, cycles reached]

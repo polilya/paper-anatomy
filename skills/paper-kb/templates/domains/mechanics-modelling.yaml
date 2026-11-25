@@ -1,0 +1,59 @@
+# Starter template: mechanics and modelling (experimental mechanics, constitutive models, FEM, multiphysics).
+name: mechanics-modelling
+description: Papers that measure mechanical behaviour or build analytical / numerical models.
+
+categories: [simulation, experiment, method, material, device, review, thesis, off-topic]
+lenses: {method: process_window, review: review_map, experiment: design_rules}
+
+object_types:
+  specimen: {topology: assembly, description: "test specimen; elements = regions / materials / grips"}
+  structure: {topology: assembly, description: "engineered structure or device under load"}
+  model: {topology: model, description: "analytical or numerical model; elements = domains, materials, boundaries"}
+
+tags:
+  materials: [elastomer, hydrogel, soft tissue, metal, composite, foam, lattice]
+  methods: [FEM, analytical, tensile test, compression, indentation, DMA, rheometry, DIC, bulge test, peel test, inverse analysis]
+  properties: [hyperelastic, viscoelastic, poroelastic, plastic, fracture, fatigue, contact, buckling, swelling]
+  applications: [soft robotics, biomechanics, implants, wearables, microsystems]
+
+element_roles: [domain, layer, specimen region, inclusion, interface, boundary, load application, grip, sensor]
+functions:
+  - carry load
+  - deform / actuate
+  - store or dissipate energy
+  - resist fracture
+  - transfer load across an interface
+link_methods:
+  perfect bonding (tie): mechanical
+  cohesive zone: mechanical
+  frictional contact: mechanical
+  frictionless contact: mechanical
+  adhesive layer: adhesive
+  co-curing: covalent
+preparation_methods: [specimen moulding, cutting / punching, meshing, parameter identification, model calibration]
+environment_entities: [applied displacement, applied force, pressure, fluid, temperature, humidity, rigid indenter, fixture]
+
+quantities:
+  youngs_modulus: Pa
+  shear_modulus: Pa
+  poisson_ratio: ratio
+  strain_rate: 1/s
+  max_strain: "%"
+  strength: Pa
+  fracture_energy: J/m2
+  adhesion_energy: J/m2
+  relaxation_time: s
+  permeability: m2
+  mesh_elements: count
+  error_vs_experiment: "%"
+  model_parameters: text
+  other: text
+log_quantities: [youngs_modulus, shear_modulus, strain_rate, fracture_energy, permeability, relaxation_time]
+plot_pairs: [[youngs_modulus, fracture_energy]]
+
+test_levels: [material, structure, model]
+test_types: [tensile, compression, shear, indentation, bending, peel, fatigue, dynamic, fracture, simulation, simulation-validation, other]
+
+protocol_checklists:
+  mechanics: [test mode and standard, specimen geometry and state, strain range and rate, which modulus / which fitted model, temperature and medium, n]
+  simulation: [software and version, geometry and dimension (2D/3D), constitutive models and parameters with sources, boundary conditions, mesh and convergence, validation against experiment]

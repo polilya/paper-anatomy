@@ -1,0 +1,60 @@
+# Starter template: biology (cells, organoids, tissues, animal models, cell–material studies).
+name: biology
+description: Papers that study biological systems or their response to materials, drugs, devices or stimuli.
+
+categories: [biology, method, material, device, clinical, simulation, review, thesis, off-topic]
+lenses: {method: process_window, review: review_map}
+
+object_types:
+  cell model: {topology: model-system, description: "cell line / primary cells in 2D or 3D culture"}
+  organoid / tissue model: {topology: model-system, description: "organoid, spheroid, tissue slice, engineered tissue"}
+  animal model: {topology: model-system, description: "in-vivo model; elements = organism, organ/tissue, intervention"}
+  cell–material system: {topology: model-system, description: "cells on/in a material; elements = cells, matrix, coating, material"}
+
+tags:
+  materials: [hydrogel, collagen, Matrigel, fibrin, PDMS, glass, polystyrene, peptide, growth factor, small molecule]
+  methods: [immunostaining, confocal, qPCR, RNA-seq, western blot, flow cytometry, patch clamp, calcium imaging, MEA, histology, live/dead]
+  properties: [viability, proliferation, differentiation, adhesion, migration, inflammation, foreign-body response, maturation]
+  applications: [neuroscience, cardiac, cancer, regenerative medicine, toxicology, drug screening, implant integration]
+
+element_roles: [cell type, co-culture partner, extracellular matrix, coating, scaffold, medium, stimulus, drug, organ, tissue, organism]
+functions:
+  - model a disease or tissue
+  - support cell adhesion
+  - guide differentiation
+  - deliver a stimulus
+  - report a response
+link_methods:
+  integrin–ligand binding: biological
+  cell–cell junctions: biological
+  receptor–ligand: biological
+  protein adsorption: non-covalent
+  covalent ligand immobilisation: covalent
+  encapsulation: mechanical
+preparation_methods: [cell isolation, differentiation protocol, organoid generation, coating protocol, surgery / implantation, transfection]
+environment_entities: [culture medium, incubator 37 °C 5 % CO2, flow / shear, electrical stimulation, mechanical load, drug, immune system, host tissue]
+
+quantities:
+  viability: "%"
+  cell_density: cells/m2
+  seeding_density: cells/m2
+  proliferation: text
+  marker_expression: text
+  firing_rate: Hz
+  amplitude: V
+  time_point: s
+  substrate_modulus: Pa
+  inflammation_score: text
+  capsule_thickness: m
+  other: text
+log_quantities: [substrate_modulus, cell_density]
+plot_pairs: [[substrate_modulus, viability]]
+
+test_levels: [cellular, tissue, animal, human, model]
+test_types: [viability, morphology, gene-expression, protein-expression, electrophysiology, imaging, histology,
+             behaviour, immune-response, functional, other]
+
+protocol_checklists:
+  cell culture: [cell source and passage, medium and supplements, coating and substrate, seeding density, time points, controls, n (biological vs technical replicates)]
+  in-vivo: [species, strain, sex, age, number, procedure, duration, readouts, controls, blinding, ethics approval]
+  imaging: [stain / reporter, instrument and objective, acquisition settings, quantification method, fields per sample]

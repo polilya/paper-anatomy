@@ -1,0 +1,15 @@
+{
+  "name": "paper-kb",
+  "owner": { "name": "Ilia Poludkin" },
+  "description": "Research literature knowledge base skill for Claude Code",
+  "plugins": [
+    {
+      "name": "paper-kb",
+      "source": "./",
+      "description": "Turn a folder of research PDFs into a cited, cross-linked knowledge base with Obsidian notes, Excel tables, plots and journal analysis.",
+      "version": "0.1.0",
+      "author": { "name": "Ilia Poludkin" },
+      "category": "productivity"
+    }
+  ]
+}

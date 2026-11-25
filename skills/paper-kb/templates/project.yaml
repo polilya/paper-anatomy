@@ -1,0 +1,27 @@
+# project.yaml — YOUR project. Filled during setup (the skill asks you the questions); edit freely.
+kb_version: 1
+title: ""                 # e.g. "Robotic catheters for endovascular navigation"
+question: ""              # your research question in 1–3 sentences; drives `relevance`
+relevance_criteria: |     # what makes a paper high / medium / low for you
+  high: ...
+  medium: ...
+  low: ...
+focus_language: en        # language of the `focus` field on the cards (everything else stays English)
+
+root: ".."                # folder that card `file:` paths are relative to (default: the folder that contains this knowledge base)
+pdf_dirs: []              # where your PDFs are, relative to root; sub-folders are scanned too. Empty = the inbox/ of this base
+
+contact_email: ""         # optional; sent to OpenAlex as a courtesy (faster "polite pool"). Leave empty if you prefer.
+
+# Focus of a paper, used in the journal analysis and overviews (three sources, all optional):
+#   auto     — category / object type written on the card (always on)
+#   folder   — the folder the PDF lies in; rename folders to labels here, ignore some
+#   keywords — label: [words]; matched in title, summary and topics
+folder_focus: {}          # e.g. {art_polymers: materials, art_review: reviews}
+folder_focus_ignore: [inbox]
+focus_keywords: {}        # e.g. {magnetic actuation: [magnetic, magnet], tendon-driven: [tendon, pull wire]}
+recent_years: 3           # "recent" in the journal analysis
+
+lab:                      # used to judge "can we reproduce this?" (our_setup, lab_compat)
+  equipment: []           # e.g. ["Instron 5965 tensile tester, 10 N load cell", "Zeiss confocal"]
+  constraints: []         # e.g. ["no animal work", "no acrylamide in the cleanroom"]

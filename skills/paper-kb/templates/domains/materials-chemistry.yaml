@@ -1,0 +1,81 @@
+# Starter template: materials and chemistry (polymers, hydrogels, composites, synthesis, formulation).
+name: materials-chemistry
+description: Papers that synthesise, formulate, process or characterise materials.
+
+categories: [material, synthesis, method, device, simulation, review, thesis, off-topic]
+lenses: {material: design_rules, synthesis: design_rules, method: process_window, review: review_map}
+
+object_types:
+  material: {topology: composition, description: "formulation: components, phases, levels of structure (molecule → network → film/bulk)"}
+  molecule: {topology: composition, description: "single compound or polymer; elements = building blocks / functional groups"}
+  composite: {topology: composition, description: "matrix + fillers / interpenetrating networks"}
+  coating: {topology: stack, description: "material on a substrate; elements = layers"}
+
+tags:
+  materials: [hydrogel, elastomer, thermoplastic, conductive polymer, ionic liquid, nanoparticle, carbon nanotube, graphene, MXene, metal, ceramic, supramolecular, biopolymer, peptide]
+  methods: [free-radical polymerisation, step-growth, click chemistry, photopolymerisation, sol-gel, electrospinning, spin-coating, solvent casting, 3D-printing, annealing]
+  properties: [stretchable, self-healing, conductive, degradable, adhesive, swelling, transparent, stimuli-responsive, biocompatible]
+  applications: [bioelectronics, tissue-engineering, drug-delivery, energy, sensing, coating, packaging]
+
+element_roles: [monomer, crosslinker, polymer backbone, filler, dopant, plasticiser, solvent, initiator, network, phase, interface, substrate, functional group]
+functions:
+  - carry load
+  - conduct electrons
+  - conduct ions
+  - crosslink / form network
+  - dissipate energy
+  - self-heal
+  - swell / retain water
+  - adhere to a surface
+  - degrade
+  - respond to a stimulus
+link_methods:
+  covalent crosslinking: covalent
+  click reaction: covalent
+  silane coupling: covalent
+  hydrogen bonding: non-covalent
+  ionic interaction: non-covalent
+  π–π stacking: non-covalent
+  host–guest: non-covalent
+  metal coordination: non-covalent
+  hydrophobic association: non-covalent
+  chain entanglement: mechanical
+  interpenetrating network: mechanical
+  physical adsorption: non-covalent
+preparation_methods: [synthesis route, polymerisation, purification, formulation / mixing, casting, curing, annealing, solvent exchange, doping, functionalisation]
+environment_entities: [water, PBS 37 °C, humidity, air / oxygen, UV light, heat, solvent, pH, cells, enzyme]
+
+quantities:
+  youngs_modulus: Pa
+  storage_modulus: Pa
+  tensile_strength: Pa
+  max_strain: "%"
+  toughness: J/m3
+  fracture_energy: J/m2
+  conductivity: S/m
+  ionic_conductivity: S/m
+  swelling_ratio: ratio
+  water_content: "%"
+  gel_fraction: "%"
+  glass_transition: K
+  molecular_weight: g/mol
+  yield: "%"
+  degree_of_conversion: "%"
+  viscosity: Pa*s
+  contact_angle: deg
+  adhesion_energy: J/m2
+  healing_efficiency: "%"
+  degradation: text
+  other: text
+log_quantities: [youngs_modulus, storage_modulus, conductivity, ionic_conductivity, viscosity, molecular_weight]
+plot_pairs: [[youngs_modulus, conductivity], [youngs_modulus, max_strain], [water_content, youngs_modulus]]
+
+test_levels: [molecule, material, device, biological, model]
+test_types: [mechanical, rheology, electrical, electrochemical, chemical, spectroscopy, structural, thermal, optical,
+             swelling, adhesion, self-healing, degradation, stability, cytocompatibility, simulation-validation, other]
+
+protocol_checklists:
+  mechanics: [test mode, sample geometry and state (dry / swollen, medium, temperature), strain range and rate, which modulus (initial / secant / storage / fitted hyperelastic), n]
+  swelling: [definition of the ratio and reference state, free or bonded sample, medium / temperature / time, equilibrium criterion, drying history]
+  conductivity: [method and geometric correction, electronic vs ionic, thickness used and its state, measured immersed or in air, n]
+  synthesis: [reagents with grade and supplier, ratios, solvent, temperature and time, atmosphere, purification, yield, characterisation of the product]

@@ -1,0 +1,35 @@
+# domain.yaml — vocabularies of YOUR field. Start from a template; the skill proposes additions from your
+# first papers and asks before adding anything. `kb.py check` prints NEW-VOCAB for terms that are not here yet.
+name: custom
+description: ""
+
+# Primary type of a paper. `lenses` = the extra field each type gets when analysed in depth.
+categories: [device, material, method, biology, simulation, clinical, review, thesis, off-topic]
+lenses: {material: design_rules, method: process_window, review: review_map}
+
+# What the papers study or build, and how it is shaped (stack of layers / assembly tree / network / composition / model system).
+object_types:
+  # device: {topology: assembly, description: "a built object that is tested as a whole"}
+
+tags:                     # free groups of tags (topics); add your own groups
+  materials: []
+  methods: []
+  properties: []
+  applications: []
+
+element_roles: []         # roles of parts inside an object, e.g. [shaft, tip, actuator, sensor, insulation]
+functions: []             # normalised verb phrases, e.g. ["transmit force to the tip", "sense contact force"]
+link_methods: {}          # method: class  — class is one of mechanical, covalent, non-covalent, adhesive,
+                          #                  thermal, electrical, fluidic, biological, other
+preparation_methods: []   # how elements are made (only key/non-obvious ones are analysed in depth)
+environment_entities: []  # what the object interacts with, e.g. [vessel wall, blood, PBS 37 °C, operator]
+
+quantities: {}            # quantity: SI unit (or "text"); cards must use exactly this unit
+log_quantities: []        # plotted on a log axis
+plot_pairs: []            # property maps, e.g. [[youngs_modulus, conductivity]]
+
+test_levels: [material, device, biological, model]
+test_types: [mechanical, electrical, electrochemical, chemical, structural, thermal, optical, adhesion,
+             stability, biological, in-vivo, clinical, simulation-validation, other]
+
+protocol_checklists: {}   # quantity: [what your own protocol must state], shown on the protocol hub pages
