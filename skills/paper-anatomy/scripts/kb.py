@@ -12,6 +12,7 @@ Commands
     kb.py stub <sha> [--id ID]         create a brief card with bibliography filled from OpenAlex/Crossref
     kb.py peek <sha|ID> <what>         read cached text: head | page:N | grep:REGEX | nums
     kb.py triage                       table of brief cards -> to ask the user which ones to analyse deeply
+    kb.py candidates                   hub pages with enough evidence for a written synthesis (analysis/*.md)
     kb.py figures [--force]            thumbnails of Fig. 1 -> figures/<ID>.png
     kb.py journals [--offline]         fetch journal metadata (OpenAlex) and build the journal analysis
     kb.py check                        validate cards; NEW-VOCAB lines = terms not yet in domain.yaml
@@ -30,7 +31,7 @@ import yaml
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 MARK = "<!-- MY NOTES: everything below this line is kept when the note is rebuilt -->"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 # ----------------------------------------------------------------------------- core vocabulary (same for every field)
 STATUSES = ["brief", "verified"]
@@ -1453,7 +1454,9 @@ def build_notes(kb, recs, T, journals, plots):
                "Conditions differ between papers — check the quantity pages before drawing conclusions.", ""]
                + [f"![[{m}]]" for m in maps] + ([] if maps else ["_No pair with ≥ 2 papers yet._"])))
     build_journal_note(kb, recs, journals, plots)
-    build_index(kb, recs, T, hubs, el_by, ln_by, env_by, prep_by, met_by, pr_by)
+    H, syns = hub_evidence(recs), load_syntheses(kb)
+    link_syntheses(kb, recs, H, syns)
+    build_index(kb, recs, T, hubs, el_by, ln_by, env_by, prep_by, met_by, pr_by, synthesis_lines(H, syns))
 
 
 def build_journal_note(kb, recs, journals, plots):
@@ -1486,12 +1489,13 @@ def build_journal_note(kb, recs, journals, plots):
     write_note(kb.notes / "Journals.md", "\n".join(s))
 
 
-def build_index(kb, recs, T, hubs, el_by, ln_by, env_by, prep_by, met_by, pr_by):
+def build_index(kb, recs, T, hubs, el_by, ln_by, env_by, prep_by, met_by, pr_by, syn_lines=()):
     st = Counter(r.get("status") for r in recs.values())
     s = [f"# {kb.project.get('title') or 'Knowledge base'}", "",
          str(kb.project.get("question") or ""), "",
          f"**{len(recs)} papers** · verified {st.get('verified', 0)} · brief {st.get('brief', 0)} · "
          f"{len(T.get('tests', []))} tests · {len(T.get('metrics', []))} numbers · {len(T.get('protocols', []))} protocols", "",
+         *syn_lines,
          "## Overviews", "- [[Interfaces]] · [[Function x solution]] · [[Property map]] · [[Journals]] · [[Design rules]] · [[Process windows]] · [[Review map]]", ""]
     for title, kind, d in (("Categories", "Category", hubs.get("Category", {})), ("Object types", "Object", hubs.get("Object", {})),
                            ("Topics", "Topic", hubs.get("Topic", {})), ("Labs", "Lab", hubs.get("Lab", {}))):
@@ -1505,6 +1509,159 @@ def build_index(kb, recs, T, hubs, el_by, ln_by, env_by, prep_by, met_by, pr_by)
                                    [[f"[[{rid}]]", r.get("year"), r.get("journal"), r.get("category"), r.get("status"),
                                      r.get("relevance"), r.get("summary")] for rid, r in sorted(recs.items(), key=lambda x: (-(x[1].get("year") or 0), x[0]))])]
     write_note(kb.notes / "Index.md", "\n".join(s))
+
+
+# ----------------------------------------------------------------------------- syntheses: hub pages → written answers
+# A hub page is one of three levels: a LIST (topic, lab, journal… — cards only carry a tag there), a COMPARISON
+# (element / link / quantity… — cards carry outcomes, numbers, conditions) and, on top of a comparison, a SYNTHESIS:
+# a written answer to one question in analysis/*.md (frontmatter `type: synthesis`). See references/synthesis.md.
+INDEX_KINDS = {"Topic", "Category", "Lab", "Journal", "Object"}
+JUDGED = {"works", "partial", "fails"}
+
+
+def hub_evidence(recs):
+    """Every hub note → kind, papers, records, records with a judgement (outcome / result / props / effect), records with numbers."""
+    H = {}
+    hasnum = lambda x: bool(re.search(r"\d", str(x or "")))
+
+    def add(kind, name, rid, judged=False, number=False):
+        note = f"{kind} - {slug(name)}"
+        h = H.setdefault(note, {"note": note, "kind": kind, "papers": set(), "records": 0, "judged": 0, "numbers": 0})
+        h["papers"].add(rid)
+        h["records"] += 1
+        h["judged"] += bool(judged)
+        h["numbers"] += bool(number)
+
+    for rid, r in recs.items():
+        for t in as_list(r.get("topics")):
+            add("Topic", t, rid)
+        for k, kind in (("category", "Category"), ("lab", "Lab"), ("journal", "Journal"), ("object_type", "Object")):
+            if r.get(k):
+                add(kind, r[k], rid)
+        for e in as_list(r.get("elements")):
+            if not isinstance(e, dict):
+                continue
+            if e.get("role"):
+                add("Element", e["role"], rid, e.get("props"), hasnum(e.get("props")))
+            p = e.get("preparation")
+            if isinstance(p, dict) and p.get("key") and p.get("method"):
+                add("Prep", p["method"], rid, p.get("parameters"), hasnum(p.get("parameters")))
+        for l in as_list(r.get("links")):
+            if isinstance(l, dict) and (l.get("method") or l.get("class")):
+                add("Link", l.get("method") or l.get("class"), rid, l.get("outcome") in JUDGED, bool(l.get("numbers")))
+        for it in as_list(r.get("interactions")):
+            if isinstance(it, dict) and it.get("entity"):
+                add("Environment", it["entity"], rid, it.get("result"), hasnum(it.get("result")))
+        for f in as_list(r.get("functions")):
+            if isinstance(f, dict) and f.get("function"):
+                add("Function", f["function"], rid, f.get("metric"), hasnum(f.get("metric")))
+        for m in as_list(r.get("metrics")):
+            if isinstance(m, dict) and m.get("quantity"):
+                add("Quantity", m["quantity"], rid, m.get("condition"), True)   # a value without its condition is not comparable
+        for p in as_list(r.get("protocols")):
+            if isinstance(p, dict) and p.get("quantity"):
+                add("Protocols", p["quantity"], rid, p.get("result"), hasnum(p.get("result")))
+        for d in as_list(r.get("design_rules")):
+            if isinstance(d, dict) and d.get("variable"):
+                add("Design rule", d["variable"], rid, d.get("effect"), hasnum(d.get("range")))
+    return H
+
+
+def load_syntheses(kb):
+    """Written syntheses: analysis/**/*.md whose YAML frontmatter has `type: synthesis` and `hubs: [<hub note>, …]`."""
+    out = []
+    for f in sorted((kb.dir / "analysis").glob("**/*.md")):
+        t = f.read_text(errors="ignore")
+        if not t.startswith("---"):
+            continue
+        try:
+            fm = yaml.safe_load(t.split("---", 2)[1]) or {}
+        except (yaml.YAMLError, IndexError) as e:
+            print(f"SKIP {f.name}: frontmatter — {str(e).splitlines()[0]}")
+            continue
+        if not isinstance(fm, dict) or fm.get("type") != "synthesis":
+            continue
+        h1 = re.search(r"^# (.+)$", t, re.M)
+        out.append({"stem": f.stem, "title": h1.group(1).strip() if h1 else f.stem, "question": fm.get("question") or "",
+                    "date": str(fm.get("date") or ""), "hubs": [str(h) for h in as_list(fm.get("hubs") or fm.get("hub"))],
+                    "papers": {str(p) for p in as_list(fm.get("papers"))}})
+    return out
+
+
+def min_papers(kb):
+    return int((kb.project.get("synthesis") or {}).get("min_papers", 4))
+
+
+def is_candidate(kb, h):
+    catch_all = h["note"].split(" - ", 1)[1].lower() in {"other", "none", "unknown", "not-reported"}
+    return h["kind"] not in INDEX_KINDS and not catch_all and len(h["papers"]) >= min_papers(kb) and h["judged"] >= 2
+
+
+def link_syntheses(kb, recs, H, syns):
+    """Put a banner under the title of each hub note: its synthesis (and whether papers were added since), or a hint
+    that the hub has enough evidence for one."""
+    paths = {p.stem: p for p in kb.notes.rglob("*.md")}
+    by_hub = defaultdict(list)
+    for s in syns:
+        for h in s["hubs"]:
+            by_hub[h].append(s)
+            if h not in paths:
+                print(f"synthesis {s['stem']}: hub '{h}' not found among the notes (spelling? e.g. 'Link - silane')")
+    for note, p in paths.items():
+        h = H.get(note)
+        lines = []
+        for s in by_hub.get(note, []):
+            new = sorted(h["papers"] - s["papers"]) if h else []
+            lines.append(f"> [!summary] Synthesis: [[{s['stem']}|{s['title']}]]" + (f" — *{s['question']}*" if s["question"] else "")
+                         + f" ({s['date']}, {len(s['papers'])} papers)")
+            if new and s["papers"]:
+                lines.append(f"> ⚠ {len(new)} paper(s) added to this hub since: " + " ".join(f"[[{i}]]" for i in new[:10]) + (" …" if len(new) > 10 else ""))
+        if not lines and h and is_candidate(kb, h):
+            lines.append(f"> [!tip] {len(h['papers'])} papers, {h['judged']} records with an outcome, result or condition, {h['numbers']} with numbers — "
+                         f"enough for a written synthesis. Ask Claude a question about it, e.g. *\"write a synthesis for {note}: …?\"*")
+        if lines:
+            t = p.read_text().split("\n", 1)
+            p.write_text(t[0] + "\n\n" + "\n".join(lines) + "\n" + (t[1] if len(t) > 1 else ""))
+
+
+def synthesis_lines(H, syns):
+    if not syns:
+        return []
+    rows = []
+    for s in syns:
+        new = set().union(*[H[h]["papers"] for h in s["hubs"] if h in H]) - s["papers"] if s["papers"] else set()
+        rows.append([f"[[{s['stem']}|{s['title']}]]", s["question"], s["date"], " · ".join(f"[[{h}]]" for h in s["hubs"]),
+                     len(s["papers"]), f"⚠ {len(new)} new paper(s)" if new else "up to date"])
+    return ["## Syntheses — written answers", mdtable(["synthesis", "question", "date", "hubs", "papers", "status"], rows), ""]
+
+
+def cmd_candidates(kb):
+    recs = kb.records()
+    H, syns = hub_evidence(recs), load_syntheses(kb)
+    covered = defaultdict(list)
+    for s in syns:
+        for h in s["hubs"]:
+            covered[h].append(s)
+    rows = []
+    for note, h in H.items():
+        if not is_candidate(kb, h):
+            continue
+        high = sum(recs[i].get("relevance") == "high" for i in h["papers"])
+        st = "none"
+        if covered.get(note):
+            new = h["papers"] - set().union(*[s["papers"] for s in covered[note]])
+            st = f"{len(new)} new paper(s) since" if new else "up to date"
+        rows.append({"hub": note, "kind": h["kind"], "papers": len(h["papers"]), "high_relevance": high,
+                     "records": h["records"], "judged": h["judged"], "numbers": h["numbers"], "synthesis": st})
+    rows.sort(key=lambda x: (x["synthesis"] == "up to date", -x["high_relevance"], -(x["judged"] + x["numbers"]), -x["papers"]))
+    write_csv(kb.tab / "synthesis_candidates.csv", rows)
+    print(mdtable(["#", "hub", "papers", "high rel.", "records", "judged", "numbers", "synthesis"],
+                  [[i + 1, x["hub"], x["papers"], x["high_relevance"], x["records"], x["judged"], x["numbers"], x["synthesis"]]
+                   for i, x in enumerate(rows)]))
+    lists = sum(h["kind"] in INDEX_KINDS for h in H.values())
+    print(f"{len(rows)} hub(s) with ≥ {min_papers(kb)} papers and ≥ 2 judged records. {lists} list hubs (topics, labs, journals…) "
+          "are not candidates: they hold tags only. Propose at most 3 to the user, as questions tied to their project; "
+          "write nothing without an answer (references/synthesis.md).")
 
 
 def cmd_build(kb):
@@ -1571,6 +1728,8 @@ def main():
         cmd_peek(kb, a.args[0], a.args[1] if len(a.args) > 1 else "head")
     elif a.cmd == "triage":
         cmd_triage(kb)
+    elif a.cmd == "candidates":
+        cmd_candidates(kb)
     elif a.cmd == "figures":
         cmd_figures(kb, a.force)
     elif a.cmd == "journals":

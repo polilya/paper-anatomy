@@ -30,6 +30,7 @@ Follow `card-schema.md` (all fields) and `deconstruction.md` (object). Order:
 1. Read methods, results, figure captions, tables; SI if present (`peek page:N`, `grep:`).
 2. `key_findings` with pages; `limitations` (incl. "SI not read" if SI is missing).
 3. Object deconstruction: `object`, `elements` (+ `preparation`, detailed only when `key: true`), `functions`, `links`, `interactions`.
+   For every link and interaction record the **outcome and its evidence** (what was shown, numbers, conditions) — this is what later makes hubs comparable and syntheses possible (`synthesis.md`).
 4. `tests` — every test, with `level`, `type`, `target` (element id / link `a–b` / environment entity).
 5. `metrics` — numbers in the unit of `domain.yaml → quantities` (convert; write the original in `condition`).
 6. The lens of the category (`design_rules`, `process_window` + `lab_compat`, `review_map`, `transfer`, `bio`).
@@ -38,6 +39,8 @@ Follow `card-schema.md` (all fields) and `deconstruction.md` (object). Order:
 
 Protocols (how exactly something was measured) are a separate permission: `protocols.md`.
 
-## Step 5 — report
+## Step 5 — report and propose syntheses
 3–6 lines: what was added, what is high relevance and why, warnings left, where to look (`notes/Index.md`,
 the paper notes, `knowledge_base.xlsx`).
+Then `kb.py candidates`: if hubs touched by this batch qualify (or an existing synthesis now has new papers), propose
+at most 3 syntheses as questions tied to the user's project, and stop (`synthesis.md`).

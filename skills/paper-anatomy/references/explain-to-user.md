@@ -6,6 +6,7 @@ Keep it concrete and short; show, don't lecture. Offer this once after setup and
 1. Every paper gets a card: a small text file with what was done, numbers and the page each number comes from.
 2. You decide which papers deserve a full read: I first make short cards for all, then ask.
 3. From the cards I generate pages you can click through (Obsidian), an Excel file and plots — you never edit those by hand; your own notes go under "📝 My notes" and are kept.
+   These pages are tables that compare papers. When you ask me a question about a topic, I write a **synthesis**: a short answer with conclusions, numbers and gaps, linked from the topic's page.
 4. I can be wrong. Check a few numbers against the PDF page I give; "verified" means checked against the PDF, not "true".
 5. The PDF text is sent to the AI model, so do not put confidential manuscripts in the inbox unless that is acceptable.
 
@@ -19,6 +20,7 @@ Keep it concrete and short; show, don't lecture. Offer this once after setup and
 | numbers compared | `Quantity - …` pages (plot + table), `Property map` |
 | what was tried for each function, what was not | `Function x solution` |
 | how to measure something | `Protocols - …` pages |
+| written answers: what holds, what it means for you, what is missing | `Index` → *Syntheses*; banner on top of a hub page |
 | journals, where to publish | `Journals` |
 | filter and sort yourself | `knowledge_base.xlsx` |
 
@@ -30,4 +32,5 @@ between pages; the graph view (left bar) shows how papers connect; search with C
 - "Add the new papers" — after dropping PDFs into the inbox.
 - "Analyse 2, 5 and 7 in depth" — after I show the table.
 - "Write out how Smith2024 measured the modulus."
+- "What do my papers say about bonding silicone to hydrogel?" (→ a synthesis) · "Which topics have enough data for a synthesis?"
 - "Compare the bending angle across papers." · "What has nobody tried yet?" · "Where should I publish this?"

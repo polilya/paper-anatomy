@@ -31,6 +31,7 @@ flowchart LR
   - *function × solution* — what has been tried for each function, and the empty cells nobody has tried;
   - *numbers* — plots of each reported quantity across papers and years, property maps (only comparable values);
   - *methods* — measurement protocols side by side (on request), with a checklist for your own protocol.
+- **Written syntheses, not only tables.** Ask a question about a topic and Claude writes a short answer from the comparison pages: what was collected, key numbers, numbered conclusions with sources, what it means for your project, what is missing. It is linked from the topic's pages and flagged when new papers arrive; after each batch Claude proposes up to three topics with enough evidence.
 - **Pages to click through** in Obsidian (paper pages and hubs, graph view), an **Excel workbook** with every table, CSV files.
 - **Also**: labs and lines of work, design rules, process windows, review maps, and a journal analysis (where the topic is published, open access, a shortlist of where to submit).
 

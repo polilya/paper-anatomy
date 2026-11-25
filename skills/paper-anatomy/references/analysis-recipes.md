@@ -16,7 +16,7 @@ Fast sources: `tables/papers.csv`, `metrics.csv`, `tests.csv`, `elements.csv`, `
 | "Which materials are used for component X, with what properties?" | `Element - <role>` hub (material, dimensions, how made, properties with pages); `elements.csv` |
 | "Who works on this?" | `Lab - …` hubs, `relations.csv` (same_lab, shared_author, follow_up) |
 | "What should I read next?" | `review_map.refs_to_add` on review cards; cited-but-missing papers (search the cached texts for DOIs not in the base) — ask before fetching anything |
-| "Write a short review of topic T" | cards with topic T, grouped by object type / approach; one paragraph per group with numbers + pages; a table; open questions. Save as `analysis/<date>_<topic>.md` in the base folder, not inside `notes/` |
+| "Write a short review of T" / "what do my papers say about T" (≥ 4 papers) | a synthesis: agree the question, then follow `synthesis.md` (structure, frontmatter `type: synthesis`, `hubs:`, `papers:`). Saved in `analysis/`, linked into the hubs by the build |
 | "Is my design new?" | deconstruct the user's design like a card (elements, links, functions) and compare element by element with the hubs |
 | "Trends over time" | `Quantity - X` plots (year on the x axis), topic counts by year from `papers.csv` |
 

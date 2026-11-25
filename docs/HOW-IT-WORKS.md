@@ -45,6 +45,21 @@ From a **paper page** you can jump to:
 
 In Obsidian also use the **graph view** (papers and hubs as a network), **search**, and the **tags** pane.
 
+## Lists, comparisons and syntheses
+Not every hub page is equally rich, and that is by design:
+
+| level | pages | why it looks like this |
+|---|---|---|
+| **list** | Topic, Category, Lab, Journal, Object | the cards only carry a tag here, so the page lists papers with a one-line summary |
+| **comparison** | Element, Link, Environment, Function, Prep, Quantity, Protocols, Design rule | deep cards record for each occurrence whether it worked, the evidence, numbers and conditions, so the page is a comparison table |
+| **synthesis** | `analysis/*.md`, linked from the hubs and from `Index` | a short written answer to one question: what was collected, key numbers, numbered conclusions with sources, what it means for your project, gaps |
+
+Syntheses are written by Claude only when you ask a question ("what do my papers say about bonding silicone to
+hydrogel?") or accept one of up to three proposals after a batch of deep analysis (`kb.py candidates` ranks the hubs
+with enough evidence). A hub that has enough evidence but no synthesis shows a hint banner; a synthesis whose hubs
+received new papers is flagged *N new paper(s) since*. To turn a list (e.g. a material tag) into an analysis, ask a
+question about it: the answer is built from the comparison hubs the tag touches.
+
 ## How data are visualised
 | What | Where |
 |---|---|

@@ -7,7 +7,7 @@
       "name": "paper-anatomy",
       "source": "./",
       "description": "Turn a folder of research PDFs into a cited, cross-linked knowledge base with Obsidian notes, Excel tables, plots and journal analysis.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": { "name": "Ilia Poludkin" },
       "category": "productivity"
     }

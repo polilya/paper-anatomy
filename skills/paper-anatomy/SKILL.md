@@ -20,7 +20,8 @@ asking the user, if `kb.py` reports them missing).
 5. **Cards are the source of truth.** Never hand-edit generated files (`notes/`, `tables/`, `knowledge_base.xlsx`). Text below `📝 My notes` in any note belongs to the user and survives rebuilds.
 6. **Language**: cards in English, except `focus.text`, written in `project.yaml → focus_language`. Talk to the user in their language. All plot text in English.
 7. **Privacy**: on first use, tell the user once that PDF text is sent to the AI model; unpublished manuscripts or confidential reports should not go into the inbox unless they accept that.
-8. Finish every task with `kb.py check` (fix warnings that are yours) and `kb.py build`, then report in a few lines what changed and where to look.
+8. **Tables are not conclusions.** Generated hubs compare; conclusions go into syntheses (`analysis/*.md`) that answer one agreed question. After a deep batch run `kb.py candidates` and propose at most 3; write only on the user's answer.
+9. Finish every task with `kb.py check` (fix warnings that are yours) and `kb.py build`, then report in a few lines what changed and where to look.
 
 ## What the user wants → what to read
 | Situation / request | Read first |
@@ -29,7 +30,8 @@ asking the user, if `kb.py` reports them missing).
 | "Add / process these papers", PDFs in the inbox | `references/add-papers.md` |
 | Deep analysis of chosen papers (verified cards) | `references/card-schema.md`, `references/deconstruction.md` |
 | "How did they measure X", "write out the method", "build our protocol" | `references/protocols.md` |
-| Questions to the base: compare, gaps, overview, synthesis, "what do my papers say about…" | `references/analysis-recipes.md` |
+| Questions to the base: compare, gaps, "what do my papers say about…" | `references/analysis-recipes.md` |
+| "Summarise / review X", a question needing ≥ 4 papers, after a deep batch, or "why are my hub pages only tables?" | `references/synthesis.md` |
 | Journals, ranks, "where should I publish" | `references/journals.md` |
 | User new to AI tools, or asks how the base works / how to navigate it | `references/explain-to-user.md` |
 
@@ -41,6 +43,7 @@ asking the user, if `kb.py` reports them missing).
 | `kb.py stub <sha>…` | creates a brief card with bibliography from OpenAlex (title, authors, year, journal, corresponding) |
 | `kb.py peek <sha or ID> head / page:N / grep:REGEX / nums` | read the cached text selectively (cheaper than reading the PDF) |
 | `kb.py triage` | table of brief cards → ask which to analyse in depth |
+| `kb.py candidates` | comparison hubs with enough outcomes and numbers for a written synthesis; flags syntheses with new papers |
 | `kb.py figures` | thumbnail of Fig. 1 per paper (`figures/<ID>_manual.png` from the user always wins) |
 | `kb.py journals` | fetch journal metadata (status, APC, citedness) → journal analysis |
 | `kb.py check` / `build` / `status` / `all` | validate / generate everything / counts / ingest+figures+build |

@@ -22,6 +22,9 @@ folder_focus_ignore: [inbox]
 focus_keywords: {}        # e.g. {magnetic actuation: [magnetic, magnet], tendon-driven: [tendon, pull wire]}
 recent_years: 3           # "recent" in the journal analysis
 
+synthesis:
+  min_papers: 4           # a hub needs this many papers (with outcomes / numbers) before a written synthesis is proposed
+
 lab:                      # used to judge "can we reproduce this?" (our_setup, lab_compat)
   equipment: []           # e.g. ["Instron 5965 tensile tester, 10 N load cell", "Zeiss confocal"]
   constraints: []         # e.g. ["no animal work", "no acrylamide in the cleanroom"]
