@@ -40,7 +40,8 @@ From a **paper page** you can jump to:
 | each protocol | side-by-side comparison of how papers measured it + a checklist for your own protocol |
 | related papers | same lab, shared authors, citations, follow-ups |
 
-**Overview pages**: `Journals`, `Function x solution`, `Property map`, `Design rules`, `Process windows`, `Review map`.
+**Overview pages**: `Interfaces` (structure map + which components and materials are joined, how), `Function x solution`,
+`Property map`, `Design rules`, `Process windows`, `Review map`, `Journals`.
 
 In Obsidian also use the **graph view** (papers and hubs as a network), **search**, and the **tags** pane.
 
@@ -51,7 +52,8 @@ In Obsidian also use the **graph view** (papers and hubs as a network), **search
 | Numbers per quantity across papers and years | `Quantity - <name>` pages (`notes/plots/plot_metric_*.png`); hollow markers = read from a figure; values in a different unit or as ranges are listed under "Not plotted" |
 | Property vs property (e.g. stiffness vs conductivity) | `Property map` — pairs set in `domain.yaml → plot_pairs` |
 | Journals: counts by category, journal × year | `Journals` page |
-| What was tried for each function | `Function x solution` table |
+| Which components meet which, how they are joined (all papers) | `Interfaces` — structure map (`plot_structure_map.png`) + tables by role and by material pair |
+| What was tried for each function | `Function x solution` — heatmap + table; columns are solution variants (the element's `principle`, else its material class) |
 | Everything as sortable tables | `knowledge_base.xlsx` (sheets: Papers, Journals, Elements, Functions, Links, Interactions, Tests, Metrics, Protocols, Design rules, Process windows, Relations) |
 
 Only comparable numbers are plotted: same quantity, single numeric value, unit of `domain.yaml`. Conditions still

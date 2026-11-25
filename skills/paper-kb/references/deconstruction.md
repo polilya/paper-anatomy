@@ -26,6 +26,7 @@ interactions:
 
 - `kind`: `structural` (holds the shape / carries load), `functional` (does the job: senses, actuates, conducts), `both`.
 - `parent`: builds a hierarchy (assembly → sub-assembly → part; film → network → polymer).
+- `principle` (optional): the working principle of the element when it is not its material — e.g. `tendon-driven`, `magnetic`, `hydraulic`, `FBG sensing`. It becomes the column of the function × solution table; without it the material class is used.
 - `links.class`: mechanical · covalent · non-covalent · adhesive · thermal · electrical · fluidic · biological · other. `method` from `domain.yaml → link_methods`. `preparation` = surface treatment or extra step for this joint. `outcome`: works / partial (holds dry, fails wet; weaker than the alternative) / fails / not tested.
 - `interactions.entity` from `domain.yaml → environment_entities`.
 - Functions: short normalised phrases from `domain.yaml → functions`, so that the same function in two papers lands on the same hub row.
@@ -55,6 +56,7 @@ fits, ask: "In Smith2024 the tendon is laser-welded to a ring — add `laser wel
 Write the answer into `domain.yaml`.
 
 ## What it gives (generated)
-Hubs per element role, link method, environment entity, key preparation method and function; the table
-`Function x solution` (rows = functions, columns = element roles, cells = papers; empty cells = untried
-combinations); a mermaid structure graph on every paper note; `target` on tests shows which parts were ever tested.
+Hubs per element role, link method, environment entity, key preparation method and function; `Interfaces` (structure
+map of roles and joints over all papers, tables by role pair and material pair); `Function x solution` (rows =
+functions, columns = solution variants, cells = papers; empty cells = untried combinations); a mermaid structure graph
+on every paper note; `target` on tests shows which parts were ever tested.

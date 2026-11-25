@@ -8,23 +8,30 @@ losing track of where each number came from.
 
 ```mermaid
 flowchart LR
-  A[PDFs in a folder] -->|ingest| B[Brief card per paper]
-  B -->|you choose which| C[Deep analysis<br/>numbers with pages]
-  C --> D[Obsidian pages & hubs]
-  C --> E[Excel + CSV]
-  C --> F[Plots of reported numbers]
-  B --> G[Journal analysis<br/>where to publish]
+  A[PDFs in a folder] --> B[Brief card per paper]
+  B -->|you choose which| C[Deep analysis<br/>every number with its page]
+  C --> D[Object taken apart:<br/>components · functions ·<br/>joints · environment]
+  D --> E[Compare across papers:<br/>structure, materials,<br/>numbers, protocols, gaps]
+  E --> F[Obsidian pages · Excel · plots]
 ```
+
+**→ See it on a real base: [visual tour](docs/EXAMPLE-bioelectronics.md)** (100 papers on soft bioelectronic interfaces)
+
+<a href="docs/EXAMPLE-bioelectronics.md"><img src="docs/img/01_paper_page.png" width="420" alt="A paper page"></a>
+<a href="docs/EXAMPLE-bioelectronics.md"><img src="docs/img/plot_structure_map.png" width="400" alt="Structure map across papers"></a>
 
 ## What you get
 - **One card per paper** (`records/<ID>.yaml`): what was done, what sets it apart, key findings — and every number with the page it comes from. Nothing is invented: missing information is written as `not reported`.
 - **Brief first, deep on request.** All new papers get a short card; Claude then shows a table with a recommendation and waits until you pick which papers to analyse in depth.
-- **Object deconstruction.** Whatever a paper builds or studies — a catheter, a hydrogel, an organoid model, a finite-element model — is taken apart into *elements*, *functions*, *links between elements* (mechanical, chemical, adhesive, thermal, electrical, fluidic, biological) and *interactions with the environment*. How a part is made is recorded in detail only when it is non-obvious or the point of the paper.
-- **Pages to click through** (Obsidian): a note per paper with its figure and a structure graph; hubs per topic, lab, journal, element role, joining method, environment, preparation method, measured quantity; a *function × solution* table that shows what has and has not been tried.
-- **Plots of the numbers** reported across papers (per quantity over years, property maps), only where values are comparable.
-- **Measurement protocols** extracted on request — how exactly something was measured, side by side across papers, with a checklist for your own protocol.
-- **Journal analysis**: which journals publish your topic, how often and when, open-access status and APC, citedness, the focus of the papers they publish — and a shortlist of where to submit.
-- **Excel workbook** with every table, for those who prefer filters to graphs.
+- **The studied object taken apart.** Whatever a paper builds or studies — a catheter, a thin-film electrode, a hydrogel, an organoid model, a finite-element model — is broken down into its *components*, their *functions*, the *joints* between them (mechanical, chemical, adhesive, thermal, electrical, fluidic, biological) and its *interactions with the environment*. How a component is made is recorded in detail only when it is non-obvious or the point of the paper. Which components exist in your field is defined with you during setup.
+- **Comparison across papers**, generated from the cards:
+  - *structure* — a map of which components meet which and how they are joined; interfaces by material pair; every use of a joining method and whether it held;
+  - *materials* — every implementation of a component role with material, dimensions, how it was made and reported properties;
+  - *function × solution* — what has been tried for each function, and the empty cells nobody has tried;
+  - *numbers* — plots of each reported quantity across papers and years, property maps (only comparable values);
+  - *methods* — measurement protocols side by side (on request), with a checklist for your own protocol.
+- **Pages to click through** in Obsidian (paper pages and hubs, graph view), an **Excel workbook** with every table, CSV files.
+- **Also**: labs and lines of work, design rules, process windows, review maps, and a journal analysis (where the topic is published, open access, a shortlist of where to submit).
 
 Your own notes in any generated page (below `📝 My notes`) are kept on every rebuild.
 
@@ -58,10 +65,8 @@ Examples of what to ask, by field:
 | Mechanics / modelling | "…on hyperelastic and poroelastic models of brain tissue" | "Which constitutive models and parameters are used, at what strain rates?" · "Which models were validated against experiments?" |
 | Any field | — | "What has nobody tried yet?" · "Which labs work on this and who builds on whom?" · "Which journals publish this, and where should I submit my paper?" · "Explain how this base works" |
 
-**See a real base:** [docs/EXAMPLE-bioelectronics.md](docs/EXAMPLE-bioelectronics.md) — 100 papers on soft
-bioelectronic interfaces: a card, a structure graph, plots, journal analysis.
-
-![Conductivity across papers in the example base](docs/img/plot_metric_conductivity.png)
+**See every step on a real base:** [visual tour](docs/EXAMPLE-bioelectronics.md) — brief cards and triage, a paper
+page, the structure map, materials per component, function × solution, numbers, protocols, Excel, graph of nodes.
 
 **Before you start:** which subscription, which model and effort per step, how many papers per 5-hour window, Obsidian
 and Zotero → [docs/RECOMMENDATIONS.md](docs/RECOMMENDATIONS.md).

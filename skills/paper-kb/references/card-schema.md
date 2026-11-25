@@ -20,7 +20,7 @@ that contain `: `. Unknown fields are kept but not rendered (check warns). Missi
 | field | content |
 |---|---|
 | `object` | `{name, purpose, scale}` |
-| `elements`, `functions`, `links`, `interactions` | see `deconstruction.md` |
+| `elements`, `functions`, `links`, `interactions` | see `deconstruction.md` (elements: `id, name, role, kind, parent, principle, material, geometry, props, preparation, page`) |
 | `tests` | every test: `{name, level, type, target, object, method, conditions, result, page}`; `level`/`type` from `domain.yaml`; `object` = sample geometry and state; `target` = element id, link `a–b` or environment entity |
 | `metrics` | `{quantity, value, unit, condition, page, from_figure}` — one number per item, unit exactly as in `domain.yaml → quantities` (convert, keep the original in `condition`); ranges → two items or text quantity |
 | `protocols` | see `protocols.md` (only with permission) |

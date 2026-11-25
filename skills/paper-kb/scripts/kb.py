@@ -41,7 +41,7 @@ OUTCOMES = ["works", "partial", "fails", "not tested"]
 ELEMENT_KINDS = ["structural", "functional", "both"]
 
 KEYS = {  # allowed keys of list items; check() warns about anything else
-    "elements": {"id", "name", "role", "kind", "parent", "material", "geometry", "props", "preparation", "note", "page"},
+    "elements": {"id", "name", "role", "kind", "parent", "principle", "material", "geometry", "props", "preparation", "note", "page"},
     "preparation": {"method", "key", "steps", "parameters", "page"},
     "functions": {"id", "function", "performed_by", "metric", "note", "page"},
     "links": {"a", "b", "class", "method", "transmits", "preparation", "tested", "outcome", "numbers", "note", "page"},
@@ -1035,11 +1035,11 @@ def mermaid(r):
     sid = {e["id"]: f"e{i}" for i, e in enumerate(els)}
 
     def lab(s):
-        return str(s).replace('"', "'").replace("\n", " ")[:60]
+        return str(s).replace('"', "'").replace("\n", " ")[:80]
 
     out = ["```mermaid", "graph TD"]
     for e in els:
-        mat = f"<br/><i>{lab(e['material'])}</i>" if e.get("material") else ""
+        mat = f"<br/><i>{lab(e['material'])}</i>" if e.get("material") and norm(e["material"]) not in norm(e.get("name")) else ""
         shape = ("([", "])") if e.get("kind") == "functional" else ("[", "]")
         out.append(f'  {sid[e["id"]]}{shape[0]}"{lab(e.get("name"))}{mat}"{shape[1]}')
     for e in els:
@@ -1165,6 +1165,94 @@ def papers_table(recs, ids):
                     for i in sorted(ids, key=lambda x: (-(recs[x].get("year") or 0), x))])
 
 
+def elem(r, eid):
+    return next((e for e in as_list(r.get("elements")) if isinstance(e, dict) and e.get("id") == eid), {})
+
+
+def variant(kb, e):
+    """Solution variant of an element: explicit `principle`, else a material tag of domain.yaml found in `material`,
+    else the first word of the material, else its role."""
+    if e.get("principle"):
+        return str(e["principle"])
+    mat = str(e.get("material") or "")
+    if mat:
+        nm = norm(mat)
+        tags = sorted(as_list((kb.domain.get("tags") or {}).get("materials")), key=lambda t: -len(norm(t)))
+        hit = next((t for t in tags if len(norm(t)) > 2 and norm(t) in nm), None)
+        if hit:
+            return hit
+        return re.split(r"[\s,;/(]+", mat.strip())[0][:24] or "?"
+    return str(e.get("role") or "?")
+
+
+def heatmap(kb, name, rows, cols, M, title):
+    """Count matrix as a PNG in notes/plots; returns the file name or None."""
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        import numpy as np
+    except ImportError:
+        return None
+    if not rows or not cols:
+        return None
+    A = np.array(M, dtype=float)
+    fig, ax = plt.subplots(figsize=(max(6, 0.55 * len(cols) + 3), 0.45 * len(rows) + 1.8))
+    ax.imshow(A, aspect="auto", cmap="Blues")
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels([str(c)[:22] for c in cols], rotation=45, ha="right", fontsize=7)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([str(r)[:40] for r in rows], fontsize=7)
+    for i in range(A.shape[0]):
+        for j in range(A.shape[1]):
+            if A[i, j]:
+                ax.text(j, i, int(A[i, j]), ha="center", va="center", fontsize=7,
+                        color="white" if A[i, j] > A.max() / 2 else "black")
+    ax.set_title(title + " — empty cells: not tried in this base", fontsize=9)
+    fig.tight_layout()
+    (kb.notes / "plots").mkdir(parents=True, exist_ok=True)
+    fig.savefig(kb.notes / "plots" / name, dpi=150)
+    plt.close(fig)
+    return name
+
+
+def structure_map(kb, recs, pairs_role):
+    """Network of element roles over all papers: node size = how many elements have the role,
+    edge width = how many links join the two roles, edge label = most used method."""
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        import networkx as nx
+    except ImportError:
+        return None
+    G = nx.Graph()
+    size = Counter(str(e.get("role") or "?") for r in recs.values() for e in as_list(r.get("elements")) if isinstance(e, dict))
+    for (a, b), xs in pairs_role.items():
+        m = Counter(str(l.get("method") or l.get("class")) for _, l in xs).most_common(1)[0][0]
+        G.add_edge(a, b, w=len(xs), label=f"{m} ({len(xs)})")
+    if G.number_of_nodes() < 2:
+        return None
+    pos = nx.kamada_kawai_layout(G)
+    fig, ax = plt.subplots(figsize=(8, 6.5))
+    ws = [G[u][v]["w"] for u, v in G.edges()]
+    nx.draw_networkx_edges(G, pos, ax=ax, width=[1 + 4 * w / max(ws) for w in ws], edge_color="#8aa", alpha=0.8)
+    nx.draw_networkx_nodes(G, pos, ax=ax, node_size=[300 + 60 * size.get(n, 1) for n in G.nodes()],
+                           node_color="#4a7fb5", alpha=0.9)
+    nx.draw_networkx_labels(G, pos, ax=ax, font_size=8, font_color="black",
+                            labels={n: f"{n}\n({size.get(n, 0)})" for n in G.nodes()})
+    nx.draw_networkx_edge_labels(G, pos, ax=ax, font_size=6,
+                                 edge_labels={(u, v): G[u][v]["label"] for u, v in G.edges() if G[u][v]["w"] >= 2})
+    ax.set_title("Structure map: element roles and how they are joined (all papers)\n"
+                 "node = role (number of elements) · edge = links between roles · label = most used method (count)", fontsize=9)
+    ax.axis("off")
+    fig.tight_layout()
+    (kb.notes / "plots").mkdir(parents=True, exist_ok=True)
+    fig.savefig(kb.notes / "plots" / "plot_structure_map.png", dpi=150)
+    plt.close(fig)
+    return "plot_structure_map.png"
+
+
 def build_notes(kb, recs, T, journals, plots):
     N = kb.notes
     rel_by = defaultdict(list)
@@ -1253,22 +1341,62 @@ def build_notes(kb, recs, T, journals, plots):
                                               ", ".join(str(next((e.get("role") for e in as_list(recs[rid].get("elements")) if isinstance(e, dict) and e.get("id") == x), "")) for x in as_list(f.get("performed_by"))),
                                               ", ".join(str(next((e.get("material") for e in as_list(recs[rid].get("elements")) if isinstance(e, dict) and e.get("id") == x), "")) for x in as_list(f.get("performed_by"))),
                                               f.get("metric"), f.get("page")] for rid, f in sorted(xs, key=lambda x: x[0])])]))
-    # morphological table: function × solution principle (element role) → papers
+    # morphological table: function × solution variant (principle / material class) → papers
     if fn_by:
-        roles = sorted({str(next((e.get("role") for e in as_list(recs[rid].get("elements")) if isinstance(e, dict) and e.get("id") == x), "") or "?")
-                        for xs in fn_by.values() for rid, f in xs for x in as_list(f.get("performed_by"))})
-        rows = []
-        for fn, xs in sorted(fn_by.items()):
-            cells = defaultdict(set)
+        cells = defaultdict(lambda: defaultdict(set))   # function -> variant -> {ids}
+        for fn, xs in fn_by.items():
             for rid, f in xs:
                 for x in as_list(f.get("performed_by")):
-                    role = next((e.get("role") for e in as_list(recs[rid].get("elements")) if isinstance(e, dict) and e.get("id") == x), "") or "?"
-                    cells[role].add(f"[[{rid}]]")
-            rows.append([L("Function", fn)] + [" ".join(sorted(cells.get(ro, []))) for ro in roles])
+                    cells[fn][variant(kb, elem(recs[rid], x))].add(rid)
+        vcount = Counter(v for fn in cells for v, ids in cells[fn].items() for _ in ids)
+        cols = [v for v, _ in vcount.most_common(14)]
+        fns = sorted(cells, key=lambda f: -sum(len(i) for i in cells[f].values()))
+        rows = []
+        for fn in fns:
+            row = [L("Function", fn)]
+            for v in cols:
+                ids = sorted(cells[fn].get(v, []))
+                row.append(" ".join(f"[[{i}]]" for i in ids) if len(ids) <= 3 else f"**{len(ids)}** papers")
+            other = [f"{v} ({len(i)})" for v, i in cells[fn].items() if v not in cols]
+            rows.append(row + [", ".join(other)])
+        heat = heatmap(kb, "plot_function_solution.png", [str(f) for f in fns], cols,
+                       [[len(cells[f].get(v, [])) for v in cols] for f in fns], "Function × solution variant (papers)")
         write_note(N / "Function x solution.md", "\n".join([
             "# Function × solution (morphological table)", "",
-            "Rows: functions. Columns: element roles that perform them. Cells: papers. Empty cells are combinations nobody in the base has tried (or that make no sense).", "",
-            mdtable(["function"] + roles, rows)]))
+            "Rows: what the objects must do. Columns: solution variants — the element's `principle` if given, otherwise the material "
+            "class recognised from the tags of `domain.yaml`, otherwise the first word of the material. Cells: papers. "
+            "**Empty cells are combinations nobody in the base has tried** (or that make no sense) — candidates for gaps.", ""]
+            + ([f"![[{heat}]]", ""] if heat else []) + [mdtable(["function"] + cols + ["other variants"], rows)]))
+    # interfaces: which parts are joined to which, by what, and did it hold (aggregated over all papers)
+    pairs_role, pairs_var = defaultdict(list), defaultdict(list)
+    for rid, r in recs.items():
+        for l in as_list(r.get("links")):
+            if not isinstance(l, dict):
+                continue
+            a, b = elem(r, l.get("a")), elem(r, l.get("b"))
+            ra, rb = sorted([str(a.get("role") or "?"), str(b.get("role") or "?")])
+            pairs_role[(ra, rb)].append((rid, l))
+            va, vb = sorted([variant(kb, a), variant(kb, b)])
+            pairs_var[(va, vb)].append((rid, l))
+    if pairs_role:
+        def summary(xs):
+            m = Counter(str(l.get("method") or l.get("class")) for _, l in xs)
+            o = Counter(str(l.get("outcome") or "not stated") for _, l in xs)
+            return (", ".join(f"{L('Link', k)} ({v})" for k, v in m.most_common()),
+                    ", ".join(f"{k} {v}" for k, v in o.most_common()),
+                    " ".join(f"[[{i}]]" for i in sorted({x[0] for x in xs})))
+        smap = structure_map(kb, recs, pairs_role)
+        write_note(N / "Interfaces.md", "\n".join([
+            "# Interfaces — what is joined to what, and how", "",
+            "Aggregated over all papers: every link between two elements. By role (which parts meet) and by material / principle "
+            "(which materials meet). Open a link method for the per-paper details, preparation and numbers.", ""]
+            + ([f"![[{smap}]]", ""] if smap else [])
+            + ["## By element role", mdtable(["element A", "element B", "links", "methods (count)", "outcomes", "papers"],
+                                             [[L("Element", a), L("Element", b), len(xs), *summary(xs)]
+                                              for (a, b), xs in sorted(pairs_role.items(), key=lambda x: -len(x[1]))]),
+               "## By material / principle", mdtable(["A", "B", "links", "methods (count)", "outcomes", "papers"],
+                                                     [[a, b, len(xs), *summary(xs)]
+                                                      for (a, b), xs in sorted(pairs_var.items(), key=lambda x: -len(x[1]))])]))
     # quantities: plot + table; protocols per quantity
     met_by = defaultdict(list)
     for rid, r in recs.items():
@@ -1364,7 +1492,7 @@ def build_index(kb, recs, T, hubs, el_by, ln_by, env_by, prep_by, met_by, pr_by)
          str(kb.project.get("question") or ""), "",
          f"**{len(recs)} papers** · verified {st.get('verified', 0)} · brief {st.get('brief', 0)} · "
          f"{len(T.get('tests', []))} tests · {len(T.get('metrics', []))} numbers · {len(T.get('protocols', []))} protocols", "",
-         "## Overviews", "- [[Journals]] · [[Function x solution]] · [[Property map]] · [[Design rules]] · [[Process windows]] · [[Review map]]", ""]
+         "## Overviews", "- [[Interfaces]] · [[Function x solution]] · [[Property map]] · [[Journals]] · [[Design rules]] · [[Process windows]] · [[Review map]]", ""]
     for title, kind, d in (("Categories", "Category", hubs.get("Category", {})), ("Object types", "Object", hubs.get("Object", {})),
                            ("Topics", "Topic", hubs.get("Topic", {})), ("Labs", "Lab", hubs.get("Lab", {}))):
         if d:
