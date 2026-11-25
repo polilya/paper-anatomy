@@ -10,9 +10,6 @@ paper-kb needs **Claude Code** (terminal, desktop app *Code* tab or IDE), which 
 | Plan | Good for |
 |---|---|
 | **Pro** | trying paper-kb; a base of a few dozen papers; brief cards for everything + deep analysis of the key papers only, spread over days |
-| **Max 5x** | regular work on a 100+ paper base: deep analysis of most relevant papers, protocols, syntheses |
-| **Max 20x** | several bases or very intensive work (hundreds of deep cards in weeks) |
-| **Team / Enterprise via your university** | ask your IT department first — the institution may already have a licence, and its data terms may matter for unpublished work |
 
 How limits work (as of late 2026): paid plans have a **rolling 5-hour session limit** and a **weekly limit**; both apply,
 and Claude Code, the web chat and the desktop app share the same allowance. Max 5x and 20x give roughly 5× and 20× the
