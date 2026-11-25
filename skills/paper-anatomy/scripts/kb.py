@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-kb.py — engine of the paper-kb skill: a literature knowledge base built from PDFs.
+kb.py — engine of the paper-anatomy skill: a literature knowledge base built from PDFs.
 
 Source of truth : <kb>/records/<ID>.yaml  (one card per paper) + <kb>/relations_manual.csv
 Configuration   : <kb>/project.yaml (your project) + <kb>/domain.yaml (vocabularies of your field)
@@ -123,7 +123,7 @@ def num(v):
 
 
 def http_json(url, email=""):
-    ua = "paper-kb/" + VERSION + (f" (mailto:{email})" if email else "")
+    ua = "paper-anatomy/" + VERSION + (f" (mailto:{email})" if email else "")
     for attempt in range(3):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": ua})

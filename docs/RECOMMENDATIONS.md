@@ -5,11 +5,11 @@ Practical advice from building a 100-paper base. Usage limits change often — c
 your own papers (see *Calibrate* below) instead of trusting any fixed number.
 
 ## Which subscription
-paper-kb needs **Claude Code** (terminal, desktop app *Code* tab or IDE), which comes with the paid plans.
+paper-anatomy needs **Claude Code** (terminal, desktop app *Code* tab or IDE), which comes with the paid plans.
 
 | Plan | Good for |
 |---|---|
-| **Pro** | trying paper-kb; a base of a few dozen papers; brief cards for everything + deep analysis of the key papers only, spread over days |
+| **Pro** | trying paper-anatomy; a base of a few dozen papers; brief cards for everything + deep analysis of the key papers only, spread over days |
 
 How limits work (as of late 2026): paid plans have a **rolling 5-hour session limit** and a **weekly limit**; both apply,
 and Claude Code, the web chat and the desktop app share the same allowance. Max 5x and 20x give roughly 5× and 20× the
@@ -53,7 +53,7 @@ scale it up.
 - Put SI next to the paper only when you need its numbers.
 - Batch brief cards when your 5-hour window is fresh; leave syntheses for a window of their own.
 
-## Tools around paper-kb
+## Tools around paper-anatomy
 | Tool | Role | Notes |
 |---|---|---|
 | **Obsidian** (free) | read and navigate the base | Recommended: local Markdown files, links between pages, graph view, search, frontmatter for the Dataview plugin. Open the knowledge base folder as a vault |

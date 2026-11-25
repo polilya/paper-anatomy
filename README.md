@@ -1,6 +1,7 @@
-# paper-kb
+# paper-anatomy
 
-**Turn a folder of research PDFs into a cited, cross-linked knowledge base — with Claude.**
+**Take your research papers apart and compare them part by part — a cited, cross-linked knowledge base built from
+your PDFs with Claude.**
 
 For researchers in biomedical engineering, materials and chemistry, biology, mechanics and neighbouring fields who
 read dozens to hundreds of papers on one topic and want to compare them part by part, number by number, without
@@ -40,10 +41,10 @@ Works wherever Claude can run Python on your files: **Claude Code** in the termi
 
 **As a plugin (recommended)** — in Claude Code:
 ```
-/plugin marketplace add polilya/paper-kb
-/plugin install paper-kb@paper-kb
+/plugin marketplace add polilya/paper-anatomy
+/plugin install paper-anatomy@paper-anatomy
 ```
-**Or copy the skill**: put the folder `skills/paper-kb` into `~/.claude/skills/` (all projects) or into `<your project>/.claude/skills/` (one project).
+**Or copy the skill**: put the folder `skills/paper-anatomy` into `~/.claude/skills/` (all projects) or into `<your project>/.claude/skills/` (one project).
 
 Python packages (Claude will offer to install them): `pip install -r requirements.txt`.
 
@@ -76,11 +77,11 @@ Limits, privacy and honest use: **[docs/FAQ.md](docs/FAQ.md)**.
 
 ## Field templates
 `biomedical-devices`, `materials-chemistry`, `biology`, `mechanics-modelling` and an empty `_template`
-(`skills/paper-kb/templates/domains/`). A template is only a start: during setup Claude proposes additions from your
+(`skills/paper-anatomy/templates/domains/`). A template is only a start: during setup Claude proposes additions from your
 first papers, and asks before adding any new term later. Contributions of templates for other fields are welcome.
 
 ## Engine without AI
-`skills/paper-kb/scripts/kb.py` is plain Python: `ingest`, `stub`, `check`, `build`, `journals`, `figures`, `triage`, `peek`.
+`skills/paper-anatomy/scripts/kb.py` is plain Python: `ingest`, `stub`, `check`, `build`, `journals`, `figures`, `triage`, `peek`.
 You can edit cards by hand and rebuild everything without Claude.
 
 ## Origin
@@ -88,4 +89,4 @@ Generalised from the literature database built for an MSc project on soft bioele
 (TU Eindhoven, 2026). Feedback and issues are very welcome.
 
 ## License
-Code: MIT. If you use paper-kb in your research, please cite it (see `CITATION.cff`).
+Code: MIT. If you use paper-anatomy in your research, please cite it (see `CITATION.cff`).

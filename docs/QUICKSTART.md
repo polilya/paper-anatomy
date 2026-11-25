@@ -9,16 +9,16 @@ Download it from claude.ai/download, sign in. Open the **Code** tab — this is 
 ## 2. Open your project folder
 In the Code tab choose the folder where your papers are (or will be). Claude only sees this folder.
 
-## 3. Install paper-kb
+## 3. Install paper-anatomy
 Type into the chat box exactly:
 ```
-/plugin marketplace add polilya/paper-kb
+/plugin marketplace add polilya/paper-anatomy
 ```
 then
 ```
-/plugin install paper-kb@paper-kb
+/plugin install paper-anatomy@paper-anatomy
 ```
-(If plugins are not available to you, ask Claude: "Install the paper-kb skill from github.com/polilya/paper-kb into this project" — it will copy the folder.)
+(If plugins are not available to you, ask Claude: "Install the paper-anatomy skill from github.com/polilya/paper-anatomy into this project" — it will copy the folder.)
 
 ## 4. Set up your base
 Write: **"Set up a paper database for my topic."** Claude asks about 8 short questions (your topic, what the papers

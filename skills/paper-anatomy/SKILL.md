@@ -1,9 +1,9 @@
 ---
-name: paper-kb
+name: paper-anatomy
 description: Build and use a cited knowledge base from a researcher's PDF papers on one topic (biomedical engineering, materials/chemistry, biology, mechanics and similar). Use when the user wants to set up a literature database, add or analyse papers ("add these papers", "process my inbox"), deconstruct what papers build or study into parts, functions, links and environment, extract how something was measured, compare reported numbers, find gaps, see which journals publish the topic or choose where to submit, or asks what their papers say about something.
 ---
 
-# paper-kb — literature knowledge base from PDFs
+# paper-anatomy — literature knowledge base from PDFs
 
 Turns a folder of PDFs into one YAML card per paper (every number with its page), and builds from the cards:
 Obsidian notes with hub pages, an Excel workbook, CSV tables, plots of reported numbers and a journal analysis.

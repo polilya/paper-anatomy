@@ -38,5 +38,5 @@ Start from `_template`; setup builds the vocabularies from your first papers. Co
 new template (pull request).
 
 **Journal impact factor?**
-Impact factors are proprietary (Clarivate). paper-kb shows OpenAlex citedness and h-index, and the SJR quartile if you
+Impact factors are proprietary (Clarivate). paper-anatomy shows OpenAlex citedness and h-index, and the SJR quartile if you
 download the free Scimago table into the base folder (`scimagojr*.csv`).

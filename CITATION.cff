@@ -1,10 +1,10 @@
 cff-version: 1.2.0
-message: "If you use paper-kb in your research, please cite it as below."
-title: "paper-kb: a cited literature knowledge base from research PDFs, built with Claude"
+message: "If you use paper-anatomy in your research, please cite it as below."
+title: "paper-anatomy: taking research papers apart into a cited knowledge base with Claude"
 authors:
   - family-names: Poludkin
     given-names: Ilia
 version: 0.1.0
 date-released: 2026-11-25
 license: MIT
-repository-code: "https://github.com/polilya/paper-kb"
+repository-code: "https://github.com/polilya/paper-anatomy"

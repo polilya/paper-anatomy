@@ -1,6 +1,6 @@
 # A visual tour — one real base, step by step
 
-paper-kb is about **reading papers and taking them apart**: short cards for everything, deep analysis of the
+paper-anatomy is about **reading papers and taking them apart**: short cards for everything, deep analysis of the
 papers that matter, the studied objects broken down into their components, and comparisons across papers. This
 tour walks through every step on a real base: **100 papers on soft bioelectronic interfaces** (conductive polymers,
 hydrogels and thin-film devices for neural interfaces), built during an MSc project at TU Eindhoven (2026).

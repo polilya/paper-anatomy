@@ -1,10 +1,10 @@
 {
-  "name": "paper-kb",
+  "name": "paper-anatomy",
   "version": "0.1.0",
-  "description": "Turn a folder of research PDFs into a cited, cross-linked knowledge base: brief cards first, deep analysis on request, object deconstruction, measurement protocols, plots of reported numbers, journal analysis. Obsidian + Excel output.",
+  "description": "Take research papers apart and compare them part by part. Turns a folder of research PDFs into a cited, cross-linked knowledge base: brief cards first, deep analysis on request, object deconstruction, measurement protocols, plots of reported numbers, journal analysis. Obsidian + Excel output.",
   "author": { "name": "Ilia Poludkin" },
-  "homepage": "https://github.com/polilya/paper-kb",
-  "repository": "https://github.com/polilya/paper-kb",
+  "homepage": "https://github.com/polilya/paper-anatomy",
+  "repository": "https://github.com/polilya/paper-anatomy",
   "license": "MIT",
   "keywords": ["literature-review", "research", "knowledge-base", "obsidian", "biomedical-engineering", "materials-science"]
 }
