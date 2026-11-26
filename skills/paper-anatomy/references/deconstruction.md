@@ -4,6 +4,31 @@ Every paper studies or builds something. Take it apart the same way in every fie
 comparable part by part: **elements**, **functions**, **links** between elements, **interactions** with the
 environment, and how the elements were **made** (in detail only when that is the point).
 
+## Depth: core first, detail on request
+Do not split an object into dozens of sub-parts by default. A base where every card has 15 elements is hard to read
+and expensive to build; most of those parts are never compared.
+
+1. **Core (default).** `project.yaml → deconstruction.core` lists the 3–7 main parts of the user's kind of object
+   (e.g. a catheter: shaft, tip, actuator, sensor; a thin-film electrode: substrate, conductor, insulation, electrode
+   site; a hydrogel: network, crosslinker, filler). On every deep card record only these, with no `parent`; their
+   links, their main interactions with the environment, the key preparation. A part outside the core goes into the
+   `note` of the core part it belongs to (`note: "includes Ti 10 nm adhesion layer"`), not into a new element.
+2. **Detail (only for parts in `deconstruction.expand`).** Inside an expanded part: sub-elements with `parent`, the
+   links between them, their key preparation. The value says what to detail (`{conductor: [polymer, crosslinker,
+   additive]}`).
+3. **Ask, then expand.** Propose detail when (a) the first 3–5 deep cards of a new base are done, or (b) a paper's
+   contribution lies inside a part that is not expanded (a new crosslinker inside "conductor", a new weld inside
+   "tip"). Then record the contribution in `key_findings` and the part's `note`, and ask: "Do you want *conductor*
+   in more detail (polymer, crosslinker, additive, how each is made)? That applies to new papers; re-reading the
+   N verified cards that have a conductor costs about N deep analyses." Offer 2–3 concrete options taken from what
+   the papers actually contain, and say which fits the user's question best. Write the answer into `expand`.
+4. **Scope.** Interactions, tests and numbers outside `project.yaml → scope.in_focus` are not taken apart:
+   `context` gets one line, `out_of_scope` nothing (`add-papers.md` step 4).
+5. **No core yet** (old base, user skipped setup): after the first deep card propose a core from it and the user's
+   question, ask, write it into `project.yaml`.
+
+`kb.py check` warns about elements finer than the core (not in `core`, and not inside an expanded part).
+
 ## Fields
 ```yaml
 object: {name: "tendon-driven catheter tip", purpose: "steer inside vessels", scale: "Ø 3 mm, 40 mm long"}

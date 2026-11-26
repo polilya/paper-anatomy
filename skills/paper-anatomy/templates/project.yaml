@@ -22,6 +22,15 @@ folder_focus_ignore: [inbox]
 focus_keywords: {}        # e.g. {magnetic actuation: [magnetic, magnet], tendon-driven: [tendon, pull wire]}
 recent_years: 3           # "recent" in the journal analysis
 
+scope:                    # what to extract and what to skip (agreed at setup from your seed papers; change any time)
+  in_focus: []            # recorded in full on deep cards, e.g. [conductor-insulation bonding, swelling, impedance]
+  context: []             # one line per paper at most, e.g. [surgical procedure, histology]
+  out_of_scope: []        # not extracted, e.g. [signal processing, animal behaviour]
+
+deconstruction:           # how finely deep analysis takes the studied object apart (set with you at setup, grows on request)
+  core: []                # the 3–7 main parts recorded on every deep card, e.g. [shaft, tip, actuator, sensor]
+  expand: {}              # part: what to detail inside it — added only when you ask, e.g. {tip: [sensor fibre, adhesive, coating]}
+
 synthesis:
   min_papers: 4           # a hub needs this many papers (with outcomes / numbers) before a written synthesis is proposed
 

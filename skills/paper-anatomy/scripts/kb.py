@@ -8,6 +8,8 @@ Generated       : <kb>/notes/** (Obsidian), <kb>/tables/*.csv, <kb>/knowledge_ba
 
 Commands
     kb.py init <dir> [--domain NAME]   create a new knowledge base (domain template: see templates/domains)
+    kb.py survey <pdf|folder>...       first look at the seed papers before a base exists: abstract, figure captions,
+                                       method headings per paper + terms and units shared across the set
     kb.py ingest                       find PDFs that have no card yet; extract text + DOI
     kb.py stub <sha> [--id ID]         create a brief card with bibliography filled from OpenAlex/Crossref
     kb.py peek <sha|ID> <what>         read cached text: head | page:N | grep:REGEX | nums
@@ -31,7 +33,7 @@ import yaml
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 MARK = "<!-- MY NOTES: everything below this line is kept when the note is rebuilt -->"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 # ----------------------------------------------------------------------------- core vocabulary (same for every field)
 STATUSES = ["brief", "verified"]
@@ -310,7 +312,7 @@ def cmd_peek(kb, key, what):
                 print(f"p{page}: {line.strip()[:220]}")
     elif what == "nums":  # lines with a number followed by a unit-like token
         page = 0
-        rx = re.compile(r"\d[\d.,]*\s?(?:[µumnkMG]?(?:Pa|m|S|Ω|ohm|F|V|A|g|L|s|Hz|N|J|W)\b|%|°C|wt|mol|mg|mL)")
+        rx = NUM_RX
         for line in t.splitlines():
             m = re.match(r"=== page (\d+) ===", line)
             if m:
@@ -319,6 +321,108 @@ def cmd_peek(kb, key, what):
                 print(f"p{page}: {line.strip()[:220]}")
     else:
         sys.exit("what = head | page:N | grep:REGEX | nums")
+
+
+# ----------------------------------------------------------------------------- survey (seed papers, before a base exists)
+NUM_RX = re.compile(r"\d[\d.,]*\s?([µumnkMG]?(?:Pa|m|S|Ω|ohm|F|V|A|g|L|s|Hz|N|J|W)\b|%|°C|wt|mol|mg|mL)")
+SECTION_RX = re.compile(r"^\s*(?:\d{1,2}\.?\s+)?(experimental(?: section| procedures)?|methods?|materials and methods|"
+                        r"methods and materials|results|discussion|results and discussion|conclusions?|references|"
+                        r"acknowledge?ments?)\s*$", re.I)
+STOP = set("""about above after again also among an and any are as at based be been before being between both but by can
+could did does done due during each either et etc for from further had has have here how however if in into is it its
+may more most much must not now of on only or other our out over per same several shown shows should since so some such
+than that the their them then there these they this those through thus to too two under up upon use used using very via
+was we were what when where which while who with within without would fig figure figures table al one three high low
+different respectively compared obtained performed showed show new results result study work paper all article org www
+doi http https image images schematic representative mean data supplementary scale bar page manuscript author authors
+available license published open access creative commons elsevier wiley nature springer copyright rights reserved
+analysis statistical engineering""".split())
+
+
+def survey_one(pdf: Path):
+    try:
+        import pymupdf
+    except ImportError:
+        import fitz as pymupdf
+    doc = pymupdf.open(pdf)
+    pages = [pg.get_text() for pg in doc]
+    text = "".join(f"\n=== page {i + 1} ===\n{t}" for i, t in enumerate(pages))
+    flat = re.sub(r"\s+", " ", " ".join(pages[:2]))
+    title = (doc.metadata or {}).get("title") or ""
+    if len(title) < 15:  # no usable metadata: the longest of the first lines on page 1
+        title = max((l.strip() for l in pages[0].splitlines()[:25] if len(l.split()) > 3), key=len, default=pdf.stem) if pages else pdf.stem
+    m = re.search(r"\ba ?b ?s ?t ?r ?a ?c ?t\b[\s:.—-]*(.{200,2500}?)(?=\b(?:keywords?|introduction|1\.?\s+introduction)\b)", flat, re.I)
+    abstract = (m.group(1) if m else flat[:1500]).strip()
+    captions, seen = [], set()
+    lines = text.splitlines()
+    for i, l in enumerate(lines):
+        c = re.match(r"^\s*Fig(?:ure|\.)?\s*(\d+)\s*[.:|]\s*(.*)", l)
+        if c and c.group(1) not in seen:
+            seen.add(c.group(1))
+            captions.append(f"Fig. {c.group(1)}: " + re.sub(r"\s+", " ", (c.group(2) + " " + (lines[i + 1] if i + 1 < len(lines) else "")))[:170])
+    heads, in_methods = [], False  # sub-headings of the methods section: what was made and measured
+    for l in lines:
+        s = SECTION_RX.match(l)
+        if s:
+            in_methods = bool(re.match(r"(experimental|method|materials)", s.group(1), re.I))
+            continue
+        l = l.strip()
+        run_in = re.match(r"^([A-Z][^.]{3,60})\.\s", l)  # "Adhesion tests. Samples were …" (heading run into the text)
+        if run_in and len(run_in.group(1).split()) <= 7:
+            l = run_in.group(1)
+        if re.match(r"^(page \d+|author manuscript)", l, re.I):
+            continue
+        if in_methods and 3 < len(l) < 70 and l[0].isupper() and not l.endswith((".", ",", ";")) \
+                and sum(ch.isdigit() for ch in l) < 4 and len(l.split()) <= 9 and l not in heads:
+            heads.append(l)
+    kind = "possible REVIEW" if re.search(r"\b(review|perspective|progress report|overview|tutorial)\b",
+                                          title + " " + abstract[:300], re.I) else "original?"
+    units = {u.replace("ohm", "Ω") for u in NUM_RX.findall(text)}
+    words = [w for w in re.findall(r"[a-zA-Z][a-zA-Z\-:]{2,}", " ".join([title, abstract, *captions, *heads]).lower())]
+    grams = {w for w in words if w not in STOP} | {f"{a} {b}" for a, b in zip(words, words[1:]) if a != b and a not in STOP and b not in STOP}
+    return {"file": pdf.name, "title": re.sub(r"\s+", " ", title), "pages": len(pages), "doi": find_doi(text),
+            "kind": kind, "text_ok": len(text.split()) > 200, "abstract": abstract[:1300], "captions": captions[:10],
+            "methods": heads[:25], "units": units, "grams": grams}
+
+
+def cmd_survey(paths):
+    pdfs = []
+    for a in paths:
+        p = Path(a)
+        if not p.exists():
+            print(f"not found: {p}")
+        pdfs += sorted(p.rglob("*.pdf")) if p.is_dir() else [p] if p.exists() else []
+    if not pdfs:
+        sys.exit("usage: kb.py survey <pdf or folder>...")
+    S = []
+    for p in pdfs:
+        try:
+            S.append(survey_one(p))
+        except Exception as e:
+            print(f"ERR {p.name}: {e}")
+    if not S:
+        sys.exit("No readable PDFs.")
+    for i, d in enumerate(S, 1):
+        print(f"\n## {i}. {d['title']}\n{d['file']} · {d['pages']} p · doi {d['doi'] or '—'} · {d['kind']}"
+              + ("" if d["text_ok"] else " · NO TEXT LAYER (scan, needs OCR)"))
+        print(f"Abstract: {d['abstract']}")
+        if d["captions"]:
+            print("Figures:\n" + "\n".join(f"- {c}" for c in d["captions"]))
+        if d["methods"]:
+            print("Methods headings: " + " · ".join(d["methods"]))
+    n = len(S)
+    need = max(2, round(n * 0.3))  # "shared" = in at least 30 % of the papers
+    print(f"\n## Across the {n} papers (counted once per paper; shared = in ≥ {need})")
+    rows = (("Shared phrases", "grams", 30, lambda x: " " in x), ("Shared words", "grams", 30, lambda x: " " not in x),
+            ("Units of reported numbers", "units", 15, lambda x: True))
+    for label, key, top, keep in rows:  # phrases and words from title, abstract, captions and method headings
+        c = Counter(x for d in S for x in d[key] if keep(x))
+        common = [f"{x} {k}" for x, k in c.most_common() if k >= need][:top]
+        print(f"{label}: " + (", ".join(common) or "—"))
+    rev = [d["file"] for d in S if d["kind"].startswith("possible")]
+    if rev:
+        print(f"Possible reviews (ask the user: replace with original papers, or keep as context): {', '.join(rev)}")
+    print("\nNext: write the portrait of the set (setup.md step 2), then ask the focus questions ONE at a time (step 3).")
 
 
 # ----------------------------------------------------------------------------- stub (bibliography from OpenAlex)
@@ -541,6 +645,15 @@ def cmd_check(kb, quiet=False):
                     NV(rid, "preparation_method", p["method"])
                 if p.get("key") and not p.get("page"):
                     W(rid, f"element {e.get('id')}: key preparation without page")
+        dec = kb.project.get("deconstruction") or {}
+        core, expand = set(as_list(dec.get("core"))), set(dec.get("expand") or {})
+        if core:   # coarse first: only the core parts, sub-parts only inside parts the user chose to expand
+            by_id = {e.get("id"): e for e in els}
+            for e in els:
+                par = by_id.get(e.get("parent")) or {}
+                if e.get("role") not in core | expand and par.get("role") not in expand:
+                    W(rid, f"element {e.get('id')} ({e.get('role')}): finer than the core — fold it into the note of its core part, "
+                           "or ask the user to add it to project.yaml → deconstruction")
         for f in items(r, "functions"):
             if funcs and f.get("function") and f["function"] not in funcs:
                 NV(rid, "function", f["function"])
@@ -1714,6 +1827,8 @@ def main():
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--offline", action="store_true")
     a = ap.parse_args()
+    if a.cmd == "survey":
+        return cmd_survey(a.args)
     if a.cmd == "init":
         if not a.args:
             sys.exit("usage: kb.py init <dir> [--domain NAME]")

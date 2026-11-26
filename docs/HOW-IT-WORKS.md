@@ -3,7 +3,7 @@
 ## Folders
 ```
 paperkb/
-├── project.yaml        your project: question, relevance criteria, PDF folders, lab, focus keywords
+├── project.yaml        your project: question, scope (in focus / context / out), core parts, relevance criteria, PDF folders, lab
 ├── domain.yaml         vocabularies of your field: categories, tags, element roles, link methods, quantities + units
 ├── records/            ONE CARD PER PAPER — the only thing that is edited (by Claude or by you)
 ├── inbox/              drop PDFs here (or list your own folders in project.yaml)
@@ -16,13 +16,20 @@ paperkb/
 ```
 Everything generated is rebuilt by `kb.py build` from the cards. Delete it and rebuild — nothing is lost.
 
+## How it starts: your papers first
+Setup does not begin with a questionnaire. You give about 10 original papers closest to your work; Claude reads them
+(`kb.py survey`: abstract, figure captions, method headings, shared terms and units), tells you what they have in
+common and how they differ, then asks one question at a time — each with options taken from those papers — to find
+what is your focus. The answers become `project.yaml → scope` (`in_focus` extracted in full, `context` in one line,
+`out_of_scope` skipped), the core parts of the object and the relevance criteria. The 10 papers become the first cards.
+
 ## How categories, types and tags appear
 - **Category** (device, material, method, biology, simulation, review…) — the primary kind of paper. It decides which extra "lens" a deep analysis fills: design rules for materials, process window for methods, a review map for reviews.
 - **Object type** (device, layered device, material, cell model, model…) — what the paper builds or studies, and how it is taken apart.
 - **Tags (topics)** — free keywords grouped in `domain.yaml` (materials, methods, properties, applications).
 
 All three come from `domain.yaml`. A template gives the first version; during setup Claude proposes additions from
-your first papers. Later, if a card needs a term that is not there, `kb.py check` reports `NEW-VOCAB` and Claude asks
+your seed papers and drops terms outside your scope. Later, if a card needs a term that is not there, `kb.py check` reports `NEW-VOCAB` and Claude asks
 you before adding it. So vocabularies stay small and consistent, and hubs do not fragment into near-duplicates.
 
 ## How to navigate
@@ -78,7 +85,7 @@ differ between papers (dry/wet, temperature, size) — always read the table nex
 | | brief | verified (deep) |
 |---|---|---|
 | reads | title, abstract, introduction | the whole paper and SI |
-| contains | bibliography, category, tags, one-line summary, focus, relevance | + key findings with pages, object deconstruction, every test, numbers, lens, limitations |
+| contains | bibliography, category, tags, one-line summary, focus, relevance | + key findings with pages, object deconstruction (the core parts set in `project.yaml → deconstruction`; finer detail only for parts you chose to expand), every test, numbers, lens, limitations |
 | when | every new paper | only papers you choose |
 
 Protocols (how exactly something was measured) are added only when you ask for a specific paper.

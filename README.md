@@ -24,7 +24,7 @@ flowchart LR
 ## What you get
 - **One card per paper** (`records/<ID>.yaml`): what was done, what sets it apart, key findings — and every number with the page it comes from. Nothing is invented: missing information is written as `not reported`.
 - **Brief first, deep on request.** All new papers get a short card; Claude then shows a table with a recommendation and waits until you pick which papers to analyse in depth.
-- **The studied object taken apart.** Whatever a paper builds or studies — a catheter, a thin-film electrode, a hydrogel, an organoid model, a finite-element model — is broken down into its *components*, their *functions*, the *joints* between them (mechanical, chemical, adhesive, thermal, electrical, fluidic, biological) and its *interactions with the environment*. How a component is made is recorded in detail only when it is non-obvious or the point of the paper. Which components exist in your field is defined with you during setup.
+- **The studied object taken apart.** Whatever a paper builds or studies — a catheter, a thin-film electrode, a hydrogel, an organoid model, a finite-element model — is broken down into its *components*, their *functions*, the *joints* between them (mechanical, chemical, adhesive, thermal, electrical, fluidic, biological) and its *interactions with the environment*. It starts coarse: only the 3–7 main parts you name at setup; Claude asks before detailing a part further, depending on your focus. How a component is made is recorded in detail only when it is non-obvious or the point of the paper.
 - **Comparison across papers**, generated from the cards:
   - *structure* — a map of which components meet which and how they are joined; interfaces by material pair; every use of a joining method and whether it held;
   - *materials* — every implementation of a component role with material, dimensions, how it was made and reported properties;
@@ -53,7 +53,7 @@ New to AI tools? → **[docs/QUICKSTART.md](docs/QUICKSTART.md)** (10 minutes, n
 
 ## Use
 Open your project folder in Claude Code and talk to it in any language. Start with **"Set up a paper database on
-<your topic>"** — a short interview follows, then a base adapted to your field. Then **"Add the new papers"** — brief
+<your topic>"** — Claude asks for ~10 papers closest to your work, reads them, tells you what they have in common and asks a few questions one at a time about what is your focus, then builds a base adapted to it. Then **"Add the new papers"** — brief
 cards for everything in the inbox and a table asking which ones to analyse in depth (e.g. "2, 5 and 7").
 
 Examples of what to ask, by field:

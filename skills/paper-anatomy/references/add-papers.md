@@ -14,7 +14,7 @@ keywords. Fill:
 - `category` (from `domain.yaml → categories`), `object_type`, `topics` (existing tags first)
 - `summary` — one line: what they did and the main result
 - `focus.text` — 2–4 sentences: what sets this paper apart (new material? record number? simpler method? new application?); `focus.axes` optional
-- `relevance` — high / medium / low against `project.yaml → relevance_criteria`, and `use_for` if obvious
+- `relevance` — high / medium / low against `project.yaml → relevance_criteria` and `scope`, and `use_for` if obvious
 - `lab` — `"<PI surname> (<institution short>)"`, reuse existing strings
 - `key_findings` — 2–5 bullets with numbers and pages if they are in the abstract
 - `status: brief`
@@ -30,6 +30,10 @@ Follow `card-schema.md` (all fields) and `deconstruction.md` (object). Order:
 1. Read methods, results, figure captions, tables; SI if present (`peek page:N`, `grep:`).
 2. `key_findings` with pages; `limitations` (incl. "SI not read" if SI is missing).
 3. Object deconstruction: `object`, `elements` (+ `preparation`, detailed only when `key: true`), `functions`, `links`, `interactions`.
+   **Core parts only** (`project.yaml → deconstruction.core`); sub-parts only inside parts listed in `expand` (`deconstruction.md`, *Depth*).
+   **Respect `project.yaml → scope`**: `in_focus` in full; `context` in one line (in `notes` or the part's `note`);
+   `out_of_scope` not extracted (no tests, metrics or protocols for it). If a paper's main contribution is out of
+   scope, say so in the report instead of extracting it, and ask whether the scope should change.
    For every link and interaction record the **outcome and its evidence** (what was shown, numbers, conditions) — this is what later makes hubs comparable and syntheses possible (`synthesis.md`).
 4. `tests` — every test, with `level`, `type`, `target` (element id / link `a–b` / environment entity).
 5. `metrics` — numbers in the unit of `domain.yaml → quantities` (convert; write the original in `condition`).
@@ -42,5 +46,6 @@ Protocols (how exactly something was measured) are a separate permission: `proto
 ## Step 5 — report and propose syntheses
 3–6 lines: what was added, what is high relevance and why, warnings left, where to look (`notes/Index.md`,
 the paper notes, `knowledge_base.xlsx`).
+In a new base, after the first 3–5 deep cards, ask which core part (if any) to detail further (`deconstruction.md`, *Depth* 3).
 Then `kb.py candidates`: if hubs touched by this batch qualify (or an existing synthesis now has new papers), propose
 at most 3 syntheses as questions tied to the user's project, and stop (`synthesis.md`).

@@ -21,9 +21,12 @@ then
 (If plugins are not available to you, ask Claude: "Install the paper-anatomy skill from github.com/polilya/paper-anatomy into this project" — it will copy the folder.)
 
 ## 4. Set up your base
-Write: **"Set up a paper database for my topic."** Claude asks about 8 short questions (your topic, what the papers
-study, which numbers you compare, where the PDFs are, your lab). Answer in a few words each. It creates a folder
-`paperkb/` with an `inbox/` inside.
+Write: **"Set up a paper database for my topic."** Claude first tells you in a few lines what you can do with the base
+(cards → taking papers apart → written syntheses, with examples) and asks for **about 10 original research papers closest
+to your work** (not reviews) — give a folder or drop the files. It reads them, tells you what it sees in them (what is
+studied, what they share, how they differ), then asks **one question at a time** about what is your focus and what is
+not: which parts of the object you design, which numbers you compare, which side topics to skip. Answer in a few words
+each; "skip" is fine. Then it creates a folder `paperkb/` with an `inbox/` inside, and your 10 papers become the first cards.
 
 When Claude asks to install Python packages or to run a command, read what it says and allow it if it matches.
 

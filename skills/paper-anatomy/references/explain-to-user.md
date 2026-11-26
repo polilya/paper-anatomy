@@ -10,6 +10,23 @@ Keep it concrete and short; show, don't lecture. Offer this once after setup and
 4. I can be wrong. Check a few numbers against the PDF page I give; "verified" means checked against the PDF, not "true".
 5. The PDF text is sent to the AI model, so do not put confidential manuscripts in the inbox unless that is acceptable.
 
+## What you can do (say this at first contact; adapt the examples to the user's field)
+| stage | you do | you get |
+|---|---|---|
+| 0. start | send ~10 original papers closest to your work | what they have in common, then a few questions one at a time about what is your focus and what is not — so nothing unneeded is extracted |
+| 1. collect | drop PDFs, say "add the new papers" | a short card per paper and a table; you choose which to read in depth |
+| 2. take apart | "analyse 2, 5 and 7 in depth" | each studied object split into its **main parts** (3–7), how they are joined, how they behave in their environment, every number with its page. More detail later, only for the parts you care about |
+| 3. ask | a question about several papers | a **synthesis**: a written answer, linked from the pages it draws on |
+
+Kinds of synthesis that worked in the base this skill comes from (100 papers on soft neural interfaces):
+- **An answer to one design question** — "Which surface treatment keeps the next layer on silicone in water?": 56 records from 29 papers grouped, outcome tally, key numbers, 8 numbered conclusions with sources, a checklist per interface of the student's own device, and what no paper has tested.
+- **How a line of work developed** — "Shape-changing neural interfaces driven by swelling, 2015–2024": one table for 8 works, what was already known in 2015, what changed, what stayed unsolved.
+- **A comparison for a decision** — "Stimulating vs recording devices": classification, three device architectures, what sets stimulating devices apart, link to the project, gaps, a draft paragraph for the thesis.
+- **Mining reviews** — which papers the reviews in the base cite most and which of them are missing from the base.
+
+Other questions of the same kind: "is my design new?", "which protocol should I use to measure X?", "what has
+nobody tried for function F?", "which numbers are comparable for quantity Q?".
+
 ## Where to look
 | You want | Open |
 |---|---|
