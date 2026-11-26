@@ -4,7 +4,7 @@ title: "paper-anatomy: taking research papers apart into a cited knowledge base 
 authors:
   - family-names: Poludkin
     given-names: Ilia
-version: 0.3.0
-date-released: 2026-11-25
+version: 0.4.0
+date-released: 2026-11-26
 license: MIT
 repository-code: "https://github.com/polilya/paper-anatomy"

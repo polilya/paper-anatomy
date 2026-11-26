@@ -22,7 +22,7 @@ that contain `: `. Unknown fields are kept but not rendered (check warns). Missi
 | `object` | `{name, purpose, scale}` |
 | `elements`, `functions`, `links`, `interactions` | see `deconstruction.md` (elements: `id, name, role, kind, parent, principle, material, geometry, props, preparation, page`) |
 | `tests` | every test: `{name, level, type, target, object, method, conditions, result, page}`; `level`/`type` from `domain.yaml`; `object` = sample geometry and state; `target` = element id, link `a–b` or environment entity |
-| `metrics` | `{quantity, value, unit, condition, page, from_figure}` — one number per item, unit exactly as in `domain.yaml → quantities` (convert, keep the original in `condition`); ranges → two items or text quantity |
+| `metrics` | `{quantity, value, unit, condition, page, from_figure, function, value_type, n, sd}` — one number per item, unit exactly as in `domain.yaml → quantities` (convert, keep the original in `condition`); ranges → two items or text quantity. Optional: `function` = id (`F1`) or name of the card's function this number describes (ties it to the elements that perform it → comparison by solution); `value_type` = `measured` (default) / `bound` ("< 1 mm", "up to") / `spec` (datasheet, design target) / `cited` (from another paper); `n`, `sd` when reported |
 | `protocols` | see `protocols.md` (only with permission) |
 | `limitations` | what is weak or missing |
 | `builds_on` | `[{id, what}]` — earlier paper in the base this one continues |

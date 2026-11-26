@@ -78,6 +78,9 @@ will start from and why. Wait for "ok".
 3. `kb.py check` → collect `NEW-VOCAB` terms. Propose ONE diff for `domain.yaml`: categories, object types, tags,
    element roles (= the core parts), functions, link methods, environment entities, quantities + SI units (those in
    focus), plot pairs, protocol checklists. Remove template terms that are out of scope. Show it as a short list, ask, then write.
+   In the same diff propose `anatomy` (`references/anatomy.md`): its nodes are the core parts, plus parts you
+   **suggest** in addition (◆, one line why each matters); set `project.yaml → focus_requested` (★) to the parts
+   the user put in focus (step 3, question 2). Also `element_columns` per role.
 4. `kb.py build`, open `notes/Index.md`, explain what was generated (`explain-to-user.md`).
 5. Propose deep analysis for the 3–5 seed papers closest to the agreed question; stop and wait (`add-papers.md` step 3).
 

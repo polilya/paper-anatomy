@@ -31,6 +31,10 @@ deconstruction:           # how finely deep analysis takes the studied object ap
   core: []                # the 3–7 main parts recorded on every deep card, e.g. [shaft, tip, actuator, sensor]
   expand: {}              # part: what to detail inside it — added only when you ask, e.g. {tip: [sensor fibre, adhesive, coating]}
 
+focus_requested: []      # anatomy parts (ids from domain.yaml → anatomy) that are in your focus; marked ★
+plots:
+  by_year: false          # value-vs-year scatter per quantity; off: the year rarely explains a difference
+
 synthesis:
   min_papers: 4           # a hub needs this many papers (with outcomes / numbers) before a written synthesis is proposed
 

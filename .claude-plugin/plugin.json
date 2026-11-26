@@ -1,6 +1,6 @@
 {
   "name": "paper-anatomy",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Take research papers apart and compare them part by part. Turns a folder of research PDFs into a cited, cross-linked knowledge base: brief cards first, deep analysis on request, object deconstruction, measurement protocols, plots of reported numbers, journal analysis. Obsidian + Excel output.",
   "author": { "name": "Ilia Poludkin" },
   "homepage": "https://github.com/polilya/paper-anatomy",

@@ -34,6 +34,7 @@ asking the user, if `kb.py` reports them missing).
 | Questions to the base: compare, gaps, "what do my papers say about…" | `references/analysis-recipes.md` |
 | "Summarise / review X", a question needing ≥ 4 papers, after a deep batch, or "why are my hub pages only tables?" | `references/synthesis.md` |
 | Journals, ranks, "where should I publish" | `references/journals.md` |
+| "Show me the parts of the object", "which solution works best for X", graph view is cluttered | `references/anatomy.md` |
 | User new to AI tools, or asks how the base works / how to navigate it | `references/explain-to-user.md` |
 
 ## Commands
@@ -49,6 +50,8 @@ asking the user, if `kb.py` reports them missing).
 | `kb.py figures` | thumbnail of Fig. 1 per paper (`figures/<ID>_manual.png` from the user always wins) |
 | `kb.py journals` | fetch journal metadata (status, APC, citedness) → journal analysis |
 | `kb.py check` / `build` / `status` / `all` | validate / generate everything / counts / ingest+figures+build |
+| `kb.py build --no-plots` | fast rebuild after one paper: keeps the PNGs already drawn |
+| `kb.py graph` | colour groups + filter for the Obsidian graph view (parts, solutions, methods, papers); ask before running, it rewrites `.obsidian/graph.json` (backup kept) |
 
 ## Session start
 Run `kb.py status`. If no base is found and the user wants one → setup: say what the base can do and ask for ~10 seed papers (`setup.md` step 0). If the user only asks a question, answer

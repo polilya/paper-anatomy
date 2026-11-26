@@ -71,7 +71,9 @@ question about it: the answer is built from the comparison hubs the tag touches.
 | What | Where |
 |---|---|
 | Structure of each studied object (elements, links, environment) | mermaid graph on the paper page |
-| Numbers per quantity across papers and years | `Quantity - <name>` pages (`notes/plots/plot_metric_*.png`); hollow markers = read from a figure; values in a different unit or as ranges are listed under "Not plotted" |
+| Numbers per quantity across papers | `Quantity - <name>` pages: summary, min / median / max with paper and page, every value folded below; value-by-year plots only with `project.yaml → plots: {by_year: true}` |
+| Which solution performs best | `Function - <name>` → *Results by solution*: table and bar plot per quantity (metrics tied with `function:`) |
+| The object as parts, solutions and test methods | `notes/anatomy/` from `domain.yaml → anatomy`; `kb.py graph` colours the graph view |
 | Property vs property (e.g. stiffness vs conductivity) | `Property map` — pairs set in `domain.yaml → plot_pairs` |
 | Journals: counts by category, journal × year | `Journals` page |
 | Which components meet which, how they are joined (all papers) | `Interfaces` — structure map (`plot_structure_map.png`) + tables by role and by material pair |
