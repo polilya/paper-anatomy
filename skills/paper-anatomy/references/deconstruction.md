@@ -26,7 +26,8 @@ interactions:
 
 - `kind`: `structural` (holds the shape / carries load), `functional` (does the job: senses, actuates, conducts), `both`.
 - `parent`: builds a hierarchy (assembly → sub-assembly → part; film → network → polymer).
-- `principle` (optional): the working principle of the element when it is not its material — e.g. `tendon-driven`, `magnetic`, `hydraulic`, `FBG sensing`. It becomes the column of the function × solution table; without it the material class is used.
+- `principle` (optional): the working principle of the element when it is not its material — e.g. `tendon-driven`, `magnetic`, `hydraulic`, `FBG sensing`. It becomes the column of the function × solution table and the solution variant in comparisons; without it the material class is used. **Keep it a short reusable label (1–4 words) shared across papers**; the detailed description goes into `note`. Free text written once is not a solution and is not compared.
+- Tie numbers to what they measure: a metric with `function: F1` is compared by the solution of the elements performing F1 (function hubs, `Function - …` → *Results by solution*, `tables/function_results.csv`).
 - `links.class`: mechanical · covalent · non-covalent · adhesive · thermal · electrical · fluidic · biological · other. `method` from `domain.yaml → link_methods`. `preparation` = surface treatment or extra step for this joint. `outcome`: works / partial (holds dry, fails wet; weaker than the alternative) / fails / not tested.
 - `interactions.entity` from `domain.yaml → environment_entities`.
 - Functions: short normalised phrases from `domain.yaml → functions`, so that the same function in two papers lands on the same hub row.
@@ -54,6 +55,11 @@ A paper can have more than one object (a new material and a device made from it)
 If a role, function, link method or environment entity is not in `domain.yaml`, first try an existing one. If none
 fits, ask: "In Smith2024 the tendon is laser-welded to a ring — add `laser welding` (thermal) to link methods?"
 Write the answer into `domain.yaml`.
+
+## Columns per part
+Different parts need different columns: a drive needs principle and numbers, a sensor range and placement, a layer
+material and thickness. `domain.yaml → element_columns` sets them per role (`default` for the rest); available:
+`principle, material, geometry, preparation, props, functions, numbers, note`. Columns empty in every row are hidden.
 
 ## What it gives (generated)
 Hubs per element role, link method, environment entity, key preparation method and function; `Interfaces` (structure

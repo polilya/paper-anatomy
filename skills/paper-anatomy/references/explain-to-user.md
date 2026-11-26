@@ -14,6 +14,8 @@ Keep it concrete and short; show, don't lecture. Offer this once after setup and
 | You want | Open |
 |---|---|
 | everything at a glance | `notes/Index.md` |
+| the object taken apart: parts, solutions, tests | `notes/anatomy/Anatomy.md` and its folders (graph view coloured by `kb.py graph`) |
+| which solution gives the best numbers for a function | `Function - …` → *Results by solution* (table + plot) |
 | one paper | `notes/papers/<ID>.md` (figure, summary, structure graph, tests, numbers, protocols) |
 | all papers on a tag / category / lab / journal | the link on the paper page → the hub page |
 | how a part is made or joined in all papers | `Element - …`, `Link - …`, `Prep - …` hubs |

@@ -16,7 +16,8 @@ Commands
     kb.py figures [--force]            thumbnails of Fig. 1 -> figures/<ID>.png
     kb.py journals [--offline]         fetch journal metadata (OpenAlex) and build the journal analysis
     kb.py check                        validate cards; NEW-VOCAB lines = terms not yet in domain.yaml
-    kb.py build                        relations + tables + xlsx + plots + Obsidian notes
+    kb.py build [--no-plots]           relations + tables + xlsx + plots + Obsidian notes (--no-plots: keep existing plots)
+    kb.py graph                        colour groups and filter for the Obsidian graph view (.obsidian/graph.json)
     kb.py status                       counts
     kb.py all                          ingest + figures + build
 
@@ -26,12 +27,13 @@ and domain.yaml), else ./paperkb.  Requirements: pymupdf pyyaml openpyxl matplot
 import argparse, csv, datetime, hashlib, json, re, shutil, sys, time, unicodedata, urllib.parse, urllib.request
 from collections import Counter, defaultdict
 from pathlib import Path
+from statistics import median
 
 import yaml
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 MARK = "<!-- MY NOTES: everything below this line is kept when the note is rebuilt -->"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 # ----------------------------------------------------------------------------- core vocabulary (same for every field)
 STATUSES = ["brief", "verified"]
@@ -40,6 +42,8 @@ LINK_CLASSES = ["mechanical", "covalent", "non-covalent", "adhesive", "thermal",
                 "biological", "other"]
 OUTCOMES = ["works", "partial", "fails", "not tested"]
 ELEMENT_KINDS = ["structural", "functional", "both"]
+VALUE_TYPES = ["measured", "bound", "spec", "cited"]   # metric value: measured here / an upper or lower bound / datasheet / quoted from another paper
+CATCH_ALL = {"other", "none", "unknown", "not-reported", "not reported"}
 
 KEYS = {  # allowed keys of list items; check() warns about anything else
     "elements": {"id", "name", "role", "kind", "parent", "principle", "material", "geometry", "props", "preparation", "note", "page"},
@@ -48,7 +52,7 @@ KEYS = {  # allowed keys of list items; check() warns about anything else
     "links": {"a", "b", "class", "method", "transmits", "preparation", "tested", "outcome", "numbers", "note", "page"},
     "interactions": {"element", "entity", "type", "requirement", "tested", "result", "note", "page"},
     "tests": {"name", "level", "type", "target", "object", "method", "conditions", "result", "page"},
-    "metrics": {"quantity", "value", "unit", "condition", "from_figure", "page"},
+    "metrics": {"quantity", "value", "unit", "condition", "from_figure", "function", "value_type", "n", "sd", "page"},
     "protocols": {"quantity", "name", "measures", "reference_state", "sample", "preparation", "environment",
                   "instrument", "procedure", "analysis", "result", "pitfalls", "missing", "our_setup", "pages"},
     "design_rules": {"variable", "range", "effect", "points", "page"},
@@ -153,6 +157,7 @@ class KB:
         self.notes = d / "notes"
         self.tab = d / "tables"
         self.email = self.project.get("contact_email", "")
+        self.no_plots = False   # build --no-plots: keep the PNGs already drawn, draw nothing new
 
     # ---- domain vocabularies (all optional; missing = no check)
     def vocab(self, key):
@@ -577,6 +582,10 @@ def cmd_check(kb, quiet=False):
                 W(rid, f"metric {q}: unit '{m.get('unit')}' should be '{qty[q]}' (convert)")
             if not m.get("page"):
                 W(rid, f"metric {q}: no page")
+            if m.get("function") and not fn_of(r, m["function"]):
+                W(rid, f"metric {q}: function '{m['function']}' is neither a function id nor a function of this card")
+            if m.get("value_type") and m["value_type"] not in VALUE_TYPES:
+                W(rid, f"metric {q}: value_type '{m['value_type']}' not in {VALUE_TYPES}")
         for p in items(r, "protocols"):
             miss = [k for k in PROTO_REQUIRED if not p.get(k)]
             if miss:
@@ -867,7 +876,23 @@ def build_xlsx(kb, T, journals):
 
 # ----------------------------------------------------------------------------- plots
 def build_plots(kb, recs, journals):
-    """PNG plots embedded in the notes. Only comparable points: same quantity, numeric value, the unit of domain.yaml."""
+    """PNG plots embedded in the notes. Only comparable points: same quantity, numeric value, the unit of domain.yaml.
+    Value-by-year scatter plots are drawn only with `project.yaml → plots: {by_year: true}`: the year rarely explains
+    a difference in a quantity; comparisons by solution variant are on the function pages (result_plot)."""
+    by_year = bool((kb.project.get("plots") or {}).get("by_year"))
+    if kb.no_plots:
+        P = kb.notes / "plots"
+        made = {"_skipped": {}}
+        for q in kb.quantities():
+            if by_year and (P / f"plot_metric_{slug(q)}.png").exists():
+                made[("metric", q)] = f"plot_metric_{slug(q)}.png"
+        for pair in as_list(kb.domain.get("plot_pairs")):
+            if isinstance(pair, list) and len(pair) == 2 and (P / f"plot_map_{slug(pair[0])}_vs_{slug(pair[1])}.png").exists():
+                made[("map", *pair)] = f"plot_map_{slug(pair[0])}_vs_{slug(pair[1])}.png"
+        for k in ("journals_counts", "journals_years"):
+            if (P / f"plot_{k}.png").exists():
+                made[k] = f"plot_{k}.png"
+        return made
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -898,7 +923,7 @@ def build_plots(kb, recs, journals):
                 skipped[q].append((rid, "no year"))
             else:
                 pts[q].append((int(r["year"]), v, rid, r.get("category") or "?", bool(m.get("from_figure")), m.get("condition", "")))
-    for q, P in pts.items():
+    for q, P in (pts.items() if by_year else []):
         fig, ax = plt.subplots(figsize=(7, 4.2))
         for c in cats:
             sub = [p for p in P if p[3] == c]
@@ -1008,7 +1033,7 @@ def build_plots(kb, recs, journals):
                 fig.savefig(out / "plot_journals_years.png", dpi=150)
                 plt.close(fig)
                 made["journals_years"] = "plot_journals_years.png"
-    made["_skipped"] = skipped
+    made["_skipped"] = skipped if by_year else {}
     return made
 
 
@@ -1025,8 +1050,255 @@ def write_note(path: Path, body: str):
 
 
 def L(kind, name):
-    """Wiki link to a hub note, e.g. L('Topic', 'PDMS') -> [[Topic - PDMS|PDMS]]."""
-    return f"[[{kind} - {slug(name)}|{name}]]" if name else ""
+    """Wiki link to a hub note, e.g. L('Topic', 'PDMS') -> [[Topic - PDMS|PDMS]]. Catch-all values ('other', 'none')
+    stay plain text: a hub that collects everything unrelated would only add noise to the graph view."""
+    if not name:
+        return ""
+    if str(name).strip().lower() in CATCH_ALL:
+        return str(name)
+    return f"[[{kind} - {slug(name)}|{name}]]"
+
+
+# ----------------------------------------------------------------------------- hub pages as documents
+FOLD_ROWS = 8   # longer tables go into a collapsed callout under the summary
+
+
+def fold(title, text, collapsed=True):
+    """Obsidian callout that hides a long table until clicked."""
+    body = "\n".join("> " + x if x else ">" for x in text.rstrip().split("\n"))
+    return f"> [!note]{'-' if collapsed else '+'} {title}\n{body}\n"
+
+
+def full_table(title, head, rows):
+    t = mdtable(head, rows)
+    return fold(f"{title} ({len(rows)})", t) if len(rows) > FOLD_ROWS else t
+
+
+def drop_empty(head, rows, keep):
+    """Remove columns that are empty in every row, except the ones named in `keep`."""
+    idx = [i for i, h in enumerate(head) if h in keep or any(cell(r[i]) for r in rows)]
+    return [head[i] for i in idx], [[r[i] for i in idx] for r in rows]
+
+
+def digest(recs, ids):
+    """A few template sentences about a set of papers (written by the script, no model tokens):
+    how many, which groups and years, at which level they were tested, which lines of work continue each other."""
+    ids = sorted(i for i in set(ids) if i in recs)
+    if not ids:
+        return []
+    years = sorted(int(recs[i]["year"]) for i in ids if recs[i].get("year"))
+    labs = Counter(recs[i]["lab"] for i in ids if recs[i].get("lab"))
+    high = sum(recs[i].get("relevance") == "high" for i in ids)
+    s = (f"**{len(ids)} paper(s)**" + (f" from {len(labs)} group(s)" if labs else "")
+         + (f", {years[0]}–{years[-1]}" if len(set(years)) > 1 else (f", {years[0]}" if years else ""))
+         + (f"; {high} of high relevance" if high else "") + ".")
+    top = [f"{L('Lab', k)} ({v})" for k, v in labs.most_common(3) if v > 1]
+    if top:
+        s += " Most papers: " + ", ".join(top) + "."
+    out = [s]
+    lv = Counter(t.get("level") for i in ids for t in as_list(recs[i].get("tests")) if isinstance(t, dict) and t.get("level"))
+    ty = Counter(t.get("type") for i in ids for t in as_list(recs[i].get("tests")) if isinstance(t, dict) and t.get("type"))
+    if lv:
+        out.append("Tests: " + " · ".join(f"{k} {v}" for k, v in lv.most_common())
+                   + (" — by type: " + ", ".join(f"{k} {v}" for k, v in ty.most_common(5)) if ty else "") + ".")
+    else:
+        out.append("No tests recorded on these cards (brief cards carry none).")
+    chains = [f"[[{x['id']}]] → [[{i}]]" for i in ids for x in as_list(recs[i].get("builds_on"))
+              if isinstance(x, dict) and x.get("id") in ids]
+    if chains:
+        out.append("Continues earlier work in this set: " + ", ".join(chains[:6]) + (" …" if len(chains) > 6 else "") + ".")
+    return out
+
+
+def key_numbers(kb, recs, ids, quantities=None, pairs=None):
+    """Per quantity: n, minimum, median, maximum (with paper and page) over measured values; bounds, datasheet and
+    cited values are counted apart because they are not the same kind of evidence. `pairs` = [(id, metric)] overrides."""
+    qty = kb.quantities()
+    if pairs is None:
+        pairs = [(i, m) for i in ids for m in as_list(recs[i].get("metrics")) if isinstance(m, dict)]
+    P, other = defaultdict(list), defaultdict(Counter)
+    for i, m in pairs:
+        q = m.get("quantity")
+        if not q or (quantities and q not in quantities) or qty.get(q) == "text" or str(q).lower() in CATCH_ALL:
+            continue
+        v = num(m.get("value"))
+        if v is None or m.get("unit") != qty.get(q):
+            continue
+        vt = m.get("value_type") or "measured"
+        if vt == "measured":
+            P[q].append((v, i, m.get("page")))
+        else:
+            other[q][vt] += 1
+    rows = []
+    for q in sorted(set(P) | set(other), key=lambda x: -len(P.get(x, []))):
+        xs = sorted(P.get(q, []))
+        ref = lambda x: f"{x[0]:g} ([[{x[1]}]] {x[2] or ''})".replace(" )", ")")
+        rows.append([L("Quantity", q), qty.get(q), len({x[1] for x in xs}), ref(xs[0]) if xs else "",
+                     f"{xs[len(xs) // 2][0]:g}" if xs else "", ref(xs[-1]) if xs else "",
+                     ", ".join(f"{k} {v}" for k, v in other[q].items())])
+    if not rows:
+        return ""
+    return mdtable(["quantity", "unit", "papers", "min", "median", "max", "not measured here"], rows)
+
+
+def element_cells(kb, r, e):
+    """Every element field that can be a column, as shown in a table."""
+    p = e.get("preparation")
+    if isinstance(p, dict) and p.get("key"):
+        prep = "**" + L("Prep", p.get("method")) + "** (key) — " + cell(p.get("parameters"))
+    else:
+        prep = cell(p.get("method") if isinstance(p, dict) else p)
+    fns = [f for f in as_list(r.get("functions")) if isinstance(f, dict) and e.get("id") in as_list(f.get("performed_by"))]
+    keys = {f.get("id") for f in fns} | {f.get("function") for f in fns}
+    nums = [f"{m.get('quantity')} {m.get('value')} {m.get('unit') or ''} ({m.get('page') or ''})".replace(" ()", "")
+            for m in as_list(r.get("metrics")) if isinstance(m, dict) and m.get("function") in keys - {None}]
+    return {"principle": e.get("principle"), "material": e.get("material"), "geometry": e.get("geometry"),
+            "preparation": prep, "props": e.get("props"), "note": e.get("note"),
+            "functions": ", ".join(L("Function", f.get("function")) for f in fns), "numbers": "; ".join(nums)}
+
+
+def parts_section(kb, recs, xs, roles):
+    """Summary, solutions, key numbers, gaps and the element table for a set of parts [(paper id, element)]."""
+    ids = sorted({rid for rid, _ in xs})
+    cols = element_columns(kb, roles)
+    head = ["paper", "year", "element"] + [ELEMENT_HEAD.get(c, c) for c in cols] + ["page"]
+    rows = [[f"[[{rid}]]", recs[rid].get("year"), e.get("name"),
+             *[element_cells(kb, recs[rid], e).get(c, e.get(c)) for c in cols], e.get("page")]
+            for rid, e in sorted(xs, key=lambda x: (-(recs[x[0]].get("year") or 0), x[0]))]
+    head2, rows2 = drop_empty(head, rows, {"paper", "year", "element", "page"})
+    var = Counter(variant(kb, e) for _, e in xs)
+    eids = {(rid, e.get("id")) for rid, e in xs}
+    fkeys = {(rid, k) for rid, e in xs for f in as_list(recs[rid].get("functions"))
+             if isinstance(f, dict) and e.get("id") in as_list(f.get("performed_by")) for k in (f.get("id"), f.get("function")) if k}
+    pairs = [(rid, m) for rid in ids for m in as_list(recs[rid].get("metrics")) if isinstance(m, dict) and (rid, m.get("function")) in fkeys]
+    tested = Counter(t.get("type") or "?" for rid in ids for t in as_list(recs[rid].get("tests"))
+                     if isinstance(t, dict) and (rid, t.get("target")) in eids)
+    out = digest(recs, ids) + [""]
+    shared = [(k, v) for k, v in var.most_common() if v > 1 and k not in roles]
+    single = sum(v == 1 for k, v in var.items() if k not in roles)
+    if shared or single:
+        out += ["**Solutions:** " + ", ".join(f"{k} ({v})" for k, v in shared)
+                + (("; " if shared else "") + f"{single} part(s) with a principle of their own (see the table)" if single else ""), ""]
+    if tested:
+        out += ["**Tested directly:** " + ", ".join(f"{k} {v}" for k, v in tested.most_common()), ""]
+    nums = key_numbers(kb, recs, ids, pairs=pairs)
+    if nums:
+        out += ["## Key numbers", "Values tied to the functions these parts perform (`metrics → function` on the cards).", "", nums]
+    empty = [h for h in head[3:-1] if h not in head2 and h != "numbers"]
+    gaps = [f"not reported by any paper: {', '.join(empty)}"] if empty else []
+    if not tested:
+        gaps.append("no test targets these parts directly")
+    if not pairs:
+        gaps.append("no numbers tied to them yet (`function:` on the metrics)")
+    if gaps:
+        out += ["**Gaps:** " + "; ".join(gaps) + ".", ""]
+    return out + [full_table("Every element", head2, rows2)]
+
+
+def function_results(kb, recs):
+    """Numbers tied to a function (`metrics → function`), labelled with the solution variant of the elements that
+    perform it: {function: {quantity: [row]}}; also tables/function_results.csv (long format, ready for plots)."""
+    out, flat = defaultdict(lambda: defaultdict(list)), []
+    for rid, r in sorted(recs.items()):
+        for m in as_list(r.get("metrics")):
+            if not isinstance(m, dict) or not m.get("function") or not m.get("quantity"):
+                continue
+            f = fn_of(r, m["function"])
+            if not f.get("function"):
+                continue
+            vs = sorted({variant(kb, elem(r, x)) for x in as_list(f.get("performed_by"))}) or ["?"]
+            row = {"function": f["function"], "quantity": m["quantity"], "variant": " + ".join(vs), "paper": rid,
+                   "year": r.get("year"), "value": m.get("value"), "unit": m.get("unit"),
+                   "value_type": m.get("value_type") or "measured", "n": m.get("n"), "sd": m.get("sd"),
+                   "condition": m.get("condition"), "page": m.get("page")}
+            out[f["function"]][m["quantity"]].append(row)
+            flat.append(row)
+    write_csv(kb.tab / "function_results.csv", flat)
+    return out
+
+
+def result_rows(kb, fn, q, R):
+    """One quantity of one function: a row per solution variant, best first, and a bar plot."""
+    qty = kb.quantities()
+    low = q in set(as_list(kb.domain.get("lower_is_better")))
+    by = defaultdict(list)
+    for x in R:
+        by[x["variant"]].append(x)
+    meas = {v: sorted(a for a in (num(x["value"]) for x in xs if x["value_type"] == "measured" and x["unit"] == qty.get(q)) if a is not None)
+            for v, xs in by.items()}
+    order = sorted(by, key=lambda v: (not meas[v], (median(meas[v]) if meas[v] else 0) * (1 if low else -1)))
+    rows = [[v, " ".join(f"[[{p}]]" for p in sorted({x["paper"] for x in by[v]})), len(meas[v]),
+             f"{median(meas[v]):g}" if meas[v] else "", f"{meas[v][0]:g}" if meas[v] else "", f"{meas[v][-1]:g}" if meas[v] else "",
+             ", ".join(f"{k} {c}" for k, c in Counter(x["value_type"] for x in by[v] if x["value_type"] != "measured").items())]
+            for v in order]
+    out = [("Lower is better" if low else "Higher first (list the quantity in `domain.yaml → lower_is_better` if lower is better)")
+           + f"; unit {qty.get(q, '?')}; statistics over measured values only.", "",
+           mdtable(["solution", "papers", "measured", "median", "min", "max", "other values"], rows)]
+    pic = result_plot(kb, fn, q, by, order, low)
+    return out + ([f"![[{pic}]]"] if pic else []) + [""]
+
+
+def result_section(kb, D, fn):
+    if not D:
+        return []
+    out = ["## Results by solution"]
+    for q, R in sorted(D.items()):
+        out += [f"### {L('Quantity', q)}", *result_rows(kb, fn, q, R)]
+    return out
+
+
+def result_plot(kb, fn, q, by, order, low):
+    """Bars = median of measured values per solution variant; dots = papers (hollow = bound / datasheet / cited)."""
+    qty = kb.quantities()
+    name = f"plot_result_{slug(fn)}_{slug(q)}.png".replace(" ", "_")
+    path = kb.notes / "plots" / name
+    pts = {v: [(num(x["value"]), x) for x in by[v] if x["unit"] == qty.get(q) and num(x["value"]) is not None] for v in order}
+    if sum(any(x["value_type"] == "measured" for _, x in pts[v]) for v in order) < 2:
+        return None
+    if kb.no_plots:
+        return name if path.exists() else None
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        return None
+    fig, ax = plt.subplots(figsize=(max(5, 0.9 * len(order) + 2), 4))
+    for i, v in enumerate(order):
+        m = [a for a, x in pts[v] if x["value_type"] == "measured"]
+        if m:
+            ax.bar(i, median(m), width=0.6, color="#9ec5e8")
+        for a, x in pts[v]:
+            ax.scatter(i, a, s=28, zorder=3, edgecolors="#1f4e79", facecolors="none" if x["value_type"] != "measured" else "#1f4e79")
+            ax.annotate(x["paper"], (i, a), fontsize=6, xytext=(4, 0), textcoords="offset points")
+    ax.set_xticks(range(len(order)))
+    ax.set_xticklabels([str(v)[:24] for v in order], rotation=30, ha="right", fontsize=7)
+    ax.set_ylabel(f"{q} ({qty.get(q)})")
+    ax.set_title(f"{fn}: {q} by solution", fontsize=10)
+    ax.grid(axis="y", alpha=0.25)
+    fig.text(0.01, 0.01, "Bar = median of measured values · filled = measured · hollow = bound / datasheet / cited"
+             + (" · lower is better" if low else ""), fontsize=6, alpha=0.7)
+    fig.tight_layout()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    return name
+
+
+ELEMENT_HEAD = {"preparation": "made by", "props": "properties"}
+DEFAULT_ELEMENT_COLUMNS = ["principle", "material", "geometry", "preparation", "props"]
+
+
+def element_columns(kb, roles):
+    """Columns for elements of these roles: `domain.yaml → element_columns` per role, else its `default`, else all of
+    DEFAULT_ELEMENT_COLUMNS. Columns that stay empty in every row are dropped afterwards."""
+    cfg = kb.domain.get("element_columns") or {}
+    out = []
+    for role in roles or [None]:
+        for c in as_list(cfg.get(role) or cfg.get("default") or DEFAULT_ELEMENT_COLUMNS):
+            if c not in out:
+                out.append(c)
+    return out
 
 
 def mermaid(r):
@@ -1097,14 +1369,12 @@ def paper_note(kb, r, rel_by):
         s += ["## Object deconstruction"]
         if ob:
             s += [f"**{ob.get('name', '')}** — {ob.get('purpose', '')}" + (f" (scale: {ob['scale']})" if ob.get("scale") else ""), ""]
-        s += [mermaid(r), "", "### Elements",
-              mdtable(["id", "element", "role", "kind", "material", "geometry", "made by", "page"],
-                      [[e.get("id"), e.get("name"), L("Element", e.get("role")), e.get("kind"), e.get("material"),
-                        e.get("geometry"),
-                        (("**" + L("Prep", (e.get("preparation") or {}).get("method")) + "** (key) — " + cell((e.get("preparation") or {}).get("parameters")))
-                         if isinstance(e.get("preparation"), dict) and e["preparation"].get("key")
-                         else cell((e.get("preparation") or {}).get("method") if isinstance(e.get("preparation"), dict) else e.get("preparation"))),
-                        e.get("page")] for e in as_list(r["elements"]) if isinstance(e, dict)])]
+        els = [e for e in as_list(r["elements"]) if isinstance(e, dict)]
+        cols = element_columns(kb, [e.get("role") for e in els])
+        head = ["id", "element", "role", "kind"] + [ELEMENT_HEAD.get(c, c) for c in cols] + ["page"]
+        rows = [[e.get("id"), e.get("name"), L("Element", e.get("role")), e.get("kind"),
+                 *[element_cells(kb, r, e).get(c, e.get(c)) for c in cols], e.get("page")] for e in els]
+        s += [mermaid(r), "", "### Elements", mdtable(*drop_empty(head, rows, {"id", "element", "role", "page"}))]
         if r.get("functions"):
             s += ["### Functions", mdtable(["function", "performed by", "metric", "page"],
                                            [[L("Function", f.get("function")), ", ".join(ename(r, x) for x in as_list(f.get("performed_by"))),
@@ -1161,13 +1431,18 @@ def paper_note(kb, r, rel_by):
 
 
 def papers_table(recs, ids):
-    return mdtable(["paper", "year", "category", "relevance", "summary"],
-                   [[f"[[{i}]]", recs[i].get("year"), recs[i].get("category"), recs[i].get("relevance"), recs[i].get("summary")]
-                    for i in sorted(ids, key=lambda x: (-(recs[x].get("year") or 0), x))])
+    return full_table("All papers", ["paper", "year", "category", "relevance", "summary"],
+                      [[f"[[{i}]]", recs[i].get("year"), recs[i].get("category"), recs[i].get("relevance"), recs[i].get("summary")]
+                       for i in sorted(ids, key=lambda x: (-(recs[x].get("year") or 0), x))])
 
 
 def elem(r, eid):
     return next((e for e in as_list(r.get("elements")) if isinstance(e, dict) and e.get("id") == eid), {})
+
+
+def fn_of(r, key):
+    """Function item of a card by its id (F1) or its name; a metric's `function` may use either."""
+    return next((f for f in as_list(r.get("functions")) if isinstance(f, dict) and key in (f.get("id"), f.get("function"))), {})
 
 
 def variant(kb, e):
@@ -1197,6 +1472,8 @@ def heatmap(kb, name, rows, cols, M, title):
         return None
     if not rows or not cols:
         return None
+    if kb.no_plots:
+        return name if (kb.notes / "plots" / name).exists() else None
     A = np.array(M, dtype=float)
     fig, ax = plt.subplots(figsize=(max(6, 0.55 * len(cols) + 3), 0.45 * len(rows) + 1.8))
     ax.imshow(A, aspect="auto", cmap="Blues")
@@ -1234,6 +1511,8 @@ def structure_map(kb, recs, pairs_role):
         G.add_edge(a, b, w=len(xs), label=f"{m} ({len(xs)})")
     if G.number_of_nodes() < 2:
         return None
+    if kb.no_plots:
+        return "plot_structure_map.png" if (kb.notes / "plots" / "plot_structure_map.png").exists() else None
     pos = nx.kamada_kawai_layout(G)
     fig, ax = plt.subplots(figsize=(8, 6.5))
     ws = [G[u][v]["w"] for u, v in G.edges()]
@@ -1272,14 +1551,17 @@ def build_notes(kb, recs, T, journals, plots):
     qty = kb.quantities()
     for kind, names in hubs.items():
         for name, ids in names.items():
-            body = [f"# {kind}: {name}", "", f"{len(ids)} paper(s).", ""]
+            body = [f"# {kind}: {name}", "", *digest(recs, ids), ""]
             if kind == "Journal":
                 j = next((x for x in journals if norm(x["journal"]) == norm(name)), None)
                 if j:
                     body += [mdtable(["status", "publisher", "APC (USD)", "OpenAlex 2-yr mean citedness", "h-index", "SJR quartile", "IF"],
                                      [[j["status"], j["publisher"], j["apc_usd"], j["openalex_2yr_mean_citedness"],
                                        j["openalex_h_index"], j["sjr_quartile"], j["impact_factor"]]]), ""]
-            body += [papers_table(recs, ids)]
+            nums = key_numbers(kb, recs, ids)
+            if nums:
+                body += ["## Key numbers", "Measured values reported by these papers. Conditions differ — open a quantity before comparing.", "", nums]
+            body += ["## Papers", papers_table(recs, ids)]
             write_note(N / "hubs" / kind.lower() / f"{kind} - {slug(name)}.md", "\n".join(body))
     # deconstruction hubs: element role, link method, environment entity, key preparation method, function
     el_by, ln_by, env_by, prep_by, fn_by = (defaultdict(list) for _ in range(5))
@@ -1302,18 +1584,16 @@ def build_notes(kb, recs, T, journals, plots):
             if isinstance(f, dict) and f.get("function"):
                 fn_by[f["function"]].append((rid, f))
     for role, xs in el_by.items():
-        write_note(N / "hubs" / "element" / f"Element - {slug(role)}.md", "\n".join([
-            f"# Element role: {role}", "", f"How {len(xs)} element(s) in {len({x[0] for x in xs})} paper(s) implement this role.", "",
-            mdtable(["paper", "year", "element", "material", "geometry", "made by", "properties", "page"],
-                    [[f"[[{rid}]]", recs[rid].get("year"), e.get("name"), e.get("material"), e.get("geometry"),
-                      (e.get("preparation") or {}).get("method") if isinstance(e.get("preparation"), dict) else e.get("preparation"),
-                      e.get("props"), e.get("page")] for rid, e in sorted(xs, key=lambda x: x[0])])]))
+        write_note(N / "hubs" / "element" / f"Element - {slug(role)}.md", "\n".join(
+            [f"# Element role: {role}", "", f"How {len(xs)} element(s) in {len({x[0] for x in xs})} paper(s) implement this role.", ""]
+            + parts_section(kb, recs, xs, [role])))
     for meth, xs in ln_by.items():
         oc = Counter(l.get("outcome") or "not stated" for _, l in xs)
         cls = Counter(l.get("class") for _, l in xs).most_common(1)[0][0]
         write_note(N / "hubs" / "link" / f"Link - {slug(meth)}.md", "\n".join([
             f"# Link method: {meth}", "", f"Class: **{cls}** · used {len(xs)}× · outcomes: " + ", ".join(f"{k} {v}" for k, v in oc.items()), "",
-            mdtable(["paper", "joins", "materials", "transmits", "preparation", "outcome", "numbers", "page"],
+            *digest(recs, [x[0] for x in xs]), "",
+            full_table("Every joint", ["paper", "joins", "materials", "transmits", "preparation", "outcome", "numbers", "page"],
                     [[f"[[{rid}]]", f"{ename(recs[rid], l.get('a'))} — {ename(recs[rid], l.get('b'))}",
                       " / ".join(str(next((e.get("material") for e in as_list(recs[rid].get("elements")) if isinstance(e, dict) and e.get("id") == k), "") or "")
                                  for k in (l.get("a"), l.get("b"))),
@@ -1322,22 +1602,29 @@ def build_notes(kb, recs, T, journals, plots):
     for ent, xs in env_by.items():
         write_note(N / "hubs" / "environment" / f"Environment - {slug(ent)}.md", "\n".join([
             f"# Environment: {ent}", "", "What devices/materials in the base do with it, what is required and what was measured.", "",
-            mdtable(["paper", "element", "type", "requirement", "tested", "result", "page"],
+            *digest(recs, [x[0] for x in xs]), "",
+            full_table("Every interaction", ["paper", "element", "type", "requirement", "tested", "result", "page"],
                     [[f"[[{rid}]]", ename(recs[rid], it.get("element")), it.get("type"), it.get("requirement"),
                       it.get("tested"), it.get("result"), it.get("page")] for rid, it in sorted(xs, key=lambda x: x[0])])]))
     for meth, xs in prep_by.items():
         pw = [(rid, w) for rid in {x[0] for x in xs} for w in as_list(recs[rid].get("process_window")) if isinstance(w, dict)]
         write_note(N / "hubs" / "preparation" / f"Prep - {slug(meth)}.md", "\n".join([
             f"# Key preparation method: {meth}", "", "Only preparations marked `key: true` (non-obvious or the focus of the authors).", "",
-            mdtable(["paper", "element", "material", "parameters", "steps", "page"],
+            *digest(recs, [x[0] for x in xs]), "",
+            full_table("Every preparation", ["paper", "element", "material", "parameters", "steps", "page"],
                     [[f"[[{rid}]]", e.get("name"), e.get("material"), p.get("parameters"), len(as_list(p.get("steps"))), p.get("page")]
                      for rid, e, p in sorted(xs, key=lambda x: x[0])]),
             "## Process windows reported by these papers",
             mdtable(["paper", "parameter", "window", "failure outside", "page"],
                     [[f"[[{rid}]]", w.get("parameter"), w.get("window"), w.get("failure"), w.get("page")] for rid, w in pw])]))
+    results = function_results(kb, recs)
     for fn, xs in fn_by.items():
+        var = Counter(variant(kb, elem(recs[rid], x)) for rid, f in xs for x in as_list(f.get("performed_by")))
         write_note(N / "hubs" / "function" / f"Function - {slug(fn)}.md", "\n".join([
-            f"# Function: {fn}", "", mdtable(["paper", "solution (element)", "role", "material", "metric", "page"],
+            f"# Function: {fn}", "", *digest(recs, [x[0] for x in xs]), "",
+            "**Solutions:** " + ", ".join(f"{k} ({v})" for k, v in var.most_common()), "",
+            *result_section(kb, results.get(fn, {}), fn),
+            full_table("Every paper", ["paper", "solution (element)", "role", "material", "metric", "page"],
                                             [[f"[[{rid}]]", ", ".join(ename(recs[rid], x) for x in as_list(f.get("performed_by"))),
                                               ", ".join(str(next((e.get("role") for e in as_list(recs[rid].get("elements")) if isinstance(e, dict) and e.get("id") == x), "")) for x in as_list(f.get("performed_by"))),
                                               ", ".join(str(next((e.get("material") for e in as_list(recs[rid].get("elements")) if isinstance(e, dict) and e.get("id") == x), "")) for x in as_list(f.get("performed_by"))),
@@ -1406,13 +1693,22 @@ def build_notes(kb, recs, T, journals, plots):
                 met_by[m["quantity"]].append((rid, m))
     skipped = plots.get("_skipped", {})
     for q, xs in met_by.items():
-        body = [f"# Quantity: {q}", "", f"Unit in this base: **{qty.get(q, '?')}**", ""]
+        body = [f"# Quantity: {q}", "", f"Unit in this base: **{qty.get(q, '?')}**", "", *digest(recs, [x[0] for x in xs]), ""]
+        nums = key_numbers(kb, recs, [], pairs=xs)
+        if nums:
+            body += ["## Key numbers", nums]
+        nocond = sorted({rid for rid, m in xs if not m.get("condition")})
+        if nocond:
+            body += [f"Values without a condition (hard to compare): " + " ".join(f"[[{i}]]" for i in nocond), ""]
+        by_fn = [(fn, R) for fn, D in results.items() for qq, R in D.items() if qq == q]
+        for fn, R in by_fn:
+            body += [f"## By solution — {L('Function', fn)}", *result_rows(kb, fn, q, R)]
         if ("metric", q) in plots:
             body += [f"![[{plots[('metric', q)]}]]", ""]
-        body += [mdtable(["paper", "year", "value", "unit", "condition", "page"],
-                         [[f"[[{rid}]]", recs[rid].get("year"), m.get("value"), m.get("unit"),
-                           (m.get("condition") or "") + (" (from figure)" if m.get("from_figure") else ""), m.get("page")]
-                          for rid, m in sorted(xs, key=lambda x: -(recs[x[0]].get("year") or 0))])]
+        body += [full_table("Every value", ["paper", "year", "value", "unit", "type", "condition", "page"],
+                            [[f"[[{rid}]]", recs[rid].get("year"), m.get("value"), m.get("unit"), m.get("value_type") or "",
+                              (m.get("condition") or "") + (" (from figure)" if m.get("from_figure") else ""), m.get("page")]
+                             for rid, m in sorted(xs, key=lambda x: -(recs[x[0]].get("year") or 0))])]
         if skipped.get(q):
             body += ["## Not plotted", mdtable(["paper", "reason"], [[f"[[{a}]]", b] for a, b in skipped[q]])]
         write_note(N / "hubs" / "quantity" / f"Quantity - {slug(q)}.md", "\n".join(body))
@@ -1438,7 +1734,8 @@ def build_notes(kb, recs, T, journals, plots):
                 dr[d["variable"]].append((rid, d))
     for v, xs in dr.items():
         write_note(N / "hubs" / "design_rule" / f"Design rule - {slug(v)}.md", "\n".join([
-            f"# Design rule: {v}", "", mdtable(["paper", "range studied", "effect", "page"],
+            f"# Design rule: {v}", "", *digest(recs, [x[0] for x in xs]), "",
+            full_table("Every paper", ["paper", "range studied", "effect", "page"],
                                               [[f"[[{rid}]]", d.get("range"), d.get("effect"), d.get("page")] for rid, d in xs])]))
     write_note(N / "Design rules.md", "\n".join(["# Design rules", "", mdtable(["variable", "papers"],
                [[L("Design rule", v), " ".join(f"[[{rid}]]" for rid, _ in xs)] for v, xs in sorted(dr.items())])]))
@@ -1454,6 +1751,7 @@ def build_notes(kb, recs, T, journals, plots):
                "Conditions differ between papers — check the quantity pages before drawing conclusions.", ""]
                + [f"![[{m}]]" for m in maps] + ([] if maps else ["_No pair with ≥ 2 papers yet._"])))
     build_journal_note(kb, recs, journals, plots)
+    build_anatomy(kb, recs)
     H, syns = hub_evidence(recs), load_syntheses(kb)
     link_syntheses(kb, recs, H, syns)
     build_index(kb, recs, T, hubs, el_by, ln_by, env_by, prep_by, met_by, pr_by, synthesis_lines(H, syns))
@@ -1509,6 +1807,181 @@ def build_index(kb, recs, T, hubs, el_by, ln_by, env_by, prep_by, met_by, pr_by,
                                    [[f"[[{rid}]]", r.get("year"), r.get("journal"), r.get("category"), r.get("status"),
                                      r.get("relevance"), r.get("summary")] for rid, r in sorted(recs.items(), key=lambda x: (-(x[1].get("year") or 0), x[0]))])]
     write_note(kb.notes / "Index.md", "\n".join(s))
+
+
+# ----------------------------------------------------------------------------- anatomy: the object as a graph of parts
+# `domain.yaml → anatomy` describes the studied object once: its parts (nodes), which part acts on which (edges) and
+# optional names for solution variants. Build then writes notes/anatomy/: an overview page and three folders whose
+# pages link to each other the way the object is built — parts ↔ parts, part → solutions → papers, method → parts.
+# File names are short (`short:`), so the Obsidian graph stays readable; the full name is the page title.
+ANATOMY_DIRS = {"node": "1 Parts", "solution": "2 Solutions", "method": "3 Methods"}
+
+
+def anatomy_cfg(kb):
+    a = kb.domain.get("anatomy") or {}
+    nodes = []
+    for n in as_list(a.get("nodes")):
+        if isinstance(n, dict) and n.get("id"):
+            nodes.append({**n, "short": str(n.get("short") or n.get("title") or n["id"])[:30]})
+    return nodes, [tuple(e) for e in as_list(a.get("edges")) if isinstance(e, list) and len(e) == 2], a.get("solutions") or {}
+
+
+def anatomy_names(nodes, sols, methods):
+    """Short file names, unique across the three layers (Obsidian links by file name). sols = {key: label}."""
+    used, out = {}, {}
+    for layer, items in (("node", [(n["id"], n["short"]) for n in nodes]), ("solution", sols.items()), ("method", [(m, m) for m in methods])):
+        for k, label in items:
+            base = slug(label)
+            name = base if base.lower() not in used else f"{base} ({layer})"
+            if base.lower() in used:
+                print(f"anatomy: '{base}' is used by a {used[base.lower()]} and a {layer} — the {layer} page is '{name}'")
+            used.setdefault(base.lower(), layer)
+            out[(layer, k)] = name
+    return out
+
+
+def build_anatomy(kb, recs):
+    nodes, edges, sol_cfg = anatomy_cfg(kb)
+    if not nodes:
+        return False
+    A = kb.notes / "anatomy"
+    for p in A.rglob("*.md") if A.exists() else []:   # drop generated pages of renamed parts, unless the user wrote notes in them
+        t = p.read_text()
+        if MARK in t and not t.split(MARK, 1)[1].replace("## 📝 My notes", "").strip():
+            p.unlink()
+    requested = {str(x) for x in as_list(kb.project.get("focus_requested"))}
+    ids_of = {n["id"]: set() for n in nodes}
+    parts_of = {n["id"]: [] for n in nodes}
+    sols = defaultdict(lambda: {"nodes": set(), "papers": set()})
+    for rid, r in recs.items():
+        topics = set(as_list(r.get("topics")))
+        fn_names = {f.get("function") for f in as_list(r.get("functions")) if isinstance(f, dict)}
+        for n in nodes:
+            roles = set(as_list(n.get("roles")))
+            els = [e for e in as_list(r.get("elements")) if isinstance(e, dict) and e.get("role") in roles]
+            parts_of[n["id"]] += [(rid, e) for e in els]
+            if els or topics & set(as_list(n.get("topics"))) or fn_names & set(as_list(n.get("functions"))):
+                ids_of[n["id"]].add(rid)
+            for e in els:   # a solution = the variant of a part (principle / material class), unless it is just the role
+                v = variant(kb, e)
+                if v != e.get("role"):
+                    sols[v]["nodes"].add(n["id"])
+                    sols[v]["papers"].add(rid)
+        for t in topics:   # tags listed under anatomy.solutions are solutions too (classification facets)
+            c = sol_cfg.get(t)
+            if isinstance(c, dict):
+                sols[t]["nodes"] |= set(as_list(c.get("nodes")))
+                sols[t]["papers"].add(rid)
+    # a principle written once as free text is a description, not a solution: keep variants shared by ≥ 2 papers
+    sols = {k: v for k, v in sols.items() if v["papers"] and (k in sol_cfg or len(v["papers"]) >= 2)}
+    tests_by = defaultdict(lambda: {"papers": set(), "nodes": Counter(), "levels": Counter()})
+    role_node = {role: n["id"] for n in nodes for role in as_list(n.get("roles"))}
+    for rid, r in recs.items():
+        for t in as_list(r.get("tests")):
+            if isinstance(t, dict) and t.get("type") and str(t["type"]).lower() not in CATCH_ALL:
+                m = tests_by[t["type"]]
+                m["papers"].add(rid)
+                m["levels"][t.get("level") or "?"] += 1
+                nid = role_node.get(elem(r, t.get("target")).get("role"))
+                if nid:
+                    m["nodes"][nid] += 1
+    label = lambda k: (sol_cfg.get(k) or {}).get("short") if isinstance(sol_cfg.get(k), dict) else None
+    names = anatomy_names(nodes, {k: label(k) or str(k)[:30] for k in sols}, list(tests_by))
+    lk = lambda layer, k: f"[[{names[(layer, k)]}]]"
+    title = {n["id"]: n.get("title") or n["short"] for n in nodes}
+    nb = defaultdict(set)
+    for a, b in edges:
+        nb[a].add(b)
+        nb[b].add(a)
+    for n in nodes:
+        nid = n["id"]
+        mine = sorted((k for k, v in sols.items() if nid in v["nodes"]), key=lambda k: -len(sols[k]["papers"]))
+        body = [f"# {title[nid]}", "", ("★ asked for by the user" if nid in requested else "◆ suggested from the papers") + f" · part of [[Anatomy]]", ""]
+        if n.get("about"):
+            body += [str(n["about"]), ""]
+        if n.get("focus"):
+            body += ["**What to look at:** " + "; ".join(as_list(n["focus"])) + ".", ""]
+        if nb[nid]:
+            body += ["**Connected parts:** " + " · ".join(lk("node", x) for x in sorted(nb[nid]) if ("node", x) in names), ""]
+        if mine:
+            body += ["**Solutions:** " + " · ".join(f"{lk('solution', k)} ({len(sols[k]['papers'])})" for k in mine), ""]
+        meth = [(k, m["nodes"][nid]) for k, m in tests_by.items() if m["nodes"][nid]]
+        if meth:
+            body += ["**Tested by:** " + " · ".join(f"{lk('method', k)} ({c})" for k, c in sorted(meth, key=lambda x: -x[1])), ""]
+        ids = sorted(ids_of[nid])
+        if parts_of[nid]:
+            body += parts_section(kb, recs, parts_of[nid], as_list(n.get("roles")))
+        else:
+            body += digest(recs, ids) + [""]
+        nums = key_numbers(kb, recs, ids, quantities=set(as_list(n.get("quantities")))) if n.get("quantities") else ""
+        if nums:
+            body += ["## Numbers of this part (all papers that touch it)", nums]
+        if ids:
+            body += ["## Papers", papers_table(recs, ids)]
+        write_note(A / ANATOMY_DIRS["node"] / f"{names[('node', nid)]}.md", "\n".join(body))
+    for k, v in sols.items():
+        ids = sorted(v["papers"])
+        quant = {q for nid in v["nodes"] for n in nodes if n["id"] == nid for q in as_list(n.get("quantities"))}
+        co = Counter(o for o, w in sols.items() if o != k for i in ids if i in w["papers"])
+        body = [f"# {label(k) + ' — ' if label(k) else ''}{k}", "", "Solution for: " + " · ".join(lk("node", x) for x in sorted(v["nodes"]) if ("node", x) in names), "",
+                *digest(recs, ids), ""]
+        if co:
+            body += ["**Used together with:** " + " · ".join(f"{lk('solution', o)} ({c})" for o, c in co.most_common(8)), ""]
+        nums = key_numbers(kb, recs, ids, quantities=quant) if quant else ""
+        if nums:
+            body += ["## Numbers reported by these papers", "Not all of them describe this solution alone — open the paper before comparing.", "", nums]
+        body += ["## Papers", papers_table(recs, ids)]
+        write_note(A / ANATOMY_DIRS["solution"] / f"{names[('solution', k)]}.md", "\n".join(body))
+    for k, m in tests_by.items():
+        ids = sorted(m["papers"])
+        body = [f"# Method: {k}", "", "Tests of this type on the cards (`tests → type`).", "",
+                "**Parts tested:** " + (" · ".join(f"{lk('node', x)} ({c})" for x, c in m["nodes"].most_common() if ("node", x) in names) or "none linked"),
+                "", "**Levels:** " + ", ".join(f"{a} {b}" for a, b in m["levels"].most_common()), "",
+                *digest(recs, ids), "",
+                full_table("Every test", ["paper", "test", "target", "method", "result", "page"],
+                           [[f"[[{rid}]]", t.get("name"), ename(recs[rid], t.get("target")), t.get("method"), t.get("result"), t.get("page")]
+                            for rid in ids for t in as_list(recs[rid].get("tests")) if isinstance(t, dict) and t.get("type") == k])]
+        write_note(A / ANATOMY_DIRS["method"] / f"{names[('method', k)]}.md", "\n".join(body))
+    sid = {n["id"]: f"n{i}" for i, n in enumerate(nodes)}
+    chart = ["```mermaid", "graph LR"] + [f'  {sid[n["id"]]}["{"★" if n["id"] in requested else "◆"} {title[n["id"]]}"]' for n in nodes]
+    chart += [f"  {sid[a]} --- {sid[b]}" for a, b in edges if a in sid and b in sid] + ["```"]
+    rows = [["★" if n["id"] in requested else "◆", lk("node", n["id"]), len(ids_of[n["id"]]),
+             ", ".join(f"{names[('solution', k)]} ({len(sols[k]['papers'])})" for k in
+                       sorted((k for k, v in sols.items() if n["id"] in v["nodes"]), key=lambda k: -len(sols[k]["papers"]))[:4]),
+             "; ".join(as_list(n.get("focus")))] for n in nodes]
+    write_note(A / "Anatomy.md", "\n".join([
+        f"# Anatomy — {(kb.domain.get('anatomy') or {}).get('object') or kb.project.get('title') or 'the studied object'}", "",
+        "The object taken apart into its parts, how they connect, which solutions the papers use for each part and how the "
+        "parts are tested. ★ = part you asked to focus on (`project.yaml → focus_requested`); ◆ = part suggested from the papers. "
+        "Parts and connections are defined in `domain.yaml → anatomy`.", "", *chart, "",
+        mdtable(["", "part", "papers", "main solutions", "what to look at"], rows),
+        "## Methods", " · ".join(f"{lk('method', k)} ({len(m['papers'])})" for k, m in sorted(tests_by.items(), key=lambda x: -len(x[1]["papers"]))), "",
+        "Graph view: run `kb.py graph` once to colour parts, solutions, methods and papers and to hide the navigation pages."]))
+    return True
+
+
+def cmd_graph(kb):
+    """Colour groups + filter for Obsidian's graph view: parts / solutions / methods / papers, navigation pages hidden.
+    Writes <vault>/.obsidian/graph.json (vault = nearest folder up from the base that has .obsidian, else the base)."""
+    vault = next((p for p in [kb.dir, *kb.dir.parents] if (p / ".obsidian").is_dir()), kb.dir)
+    rel = lambda p: str(p.relative_to(vault)).replace("\\", "/") if p != vault else ""
+    A, P = kb.notes / "anatomy", kb.notes / "papers"
+    q = lambda p: f'path:"{rel(p)}"'
+    groups = [(A / ANATOMY_DIRS["node"], 0xE8590C), (A / ANATOMY_DIRS["solution"], 0xF59F00),
+              (A / ANATOMY_DIRS["method"], 0x9C36B5), (P, 0x1C7ED6)]
+    gp = vault / ".obsidian" / "graph.json"
+    cfg = json.loads(gp.read_text()) if gp.exists() else {}
+    if gp.exists():
+        shutil.copy(gp, gp.with_suffix(".json.bak"))
+    show = [q(p) for p, _ in groups if p.exists()]
+    cfg.update({"search": " OR ".join(show), "showTags": False, "showAttachments": False, "hideUnresolved": True,
+                "colorGroups": [{"query": q(p), "color": {"a": 1, "rgb": c}} for p, c in groups if p.exists()]})
+    gp.parent.mkdir(parents=True, exist_ok=True)
+    gp.write_text(json.dumps(cfg, indent=2, ensure_ascii=False))
+    had = gp.with_suffix(".json.bak").exists()
+    print(f"wrote {gp}" + (" (previous version: graph.json.bak)" if had else "") + ". Groups: parts orange, solutions yellow, methods purple, papers blue."
+          + ("" if A.exists() else " No anatomy layer yet — add domain.yaml → anatomy and run build; only papers are shown now.")
+          + " Reopen the graph view in Obsidian to see it.")
 
 
 # ----------------------------------------------------------------------------- syntheses: hub pages → written answers
@@ -1713,6 +2186,7 @@ def main():
     ap.add_argument("--id")
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--offline", action="store_true")
+    ap.add_argument("--no-plots", action="store_true")
     a = ap.parse_args()
     if a.cmd == "init":
         if not a.args:
@@ -1738,7 +2212,10 @@ def main():
         warn, _ = cmd_check(kb)
         sys.exit(1 if warn else 0)
     elif a.cmd == "build":
+        kb.no_plots = a.no_plots
         cmd_build(kb)
+    elif a.cmd == "graph":
+        cmd_graph(kb)
     elif a.cmd == "status":
         cmd_status(kb)
     elif a.cmd == "all":
