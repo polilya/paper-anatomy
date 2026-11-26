@@ -71,6 +71,7 @@ quantities:
   biocompatibility: text
   stability: text
   other: text
+lower_is_better: [positioning_error, response_time, temperature_rise]
 log_quantities: [youngs_modulus, bending_stiffness, impedance, fatigue_cycles]
 plot_pairs: [[diameter, bending_angle], [youngs_modulus, max_strain]]
 

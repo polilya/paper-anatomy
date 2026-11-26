@@ -13,6 +13,7 @@ Goal: a base whose vocabularies fit the user's field, so hubs and plots make sen
 8. Language for the short "focus" note on each card.
 
 Then say in 3–5 lines how you understood the field, which template you will start from and why. Wait for "ok".
+Write the parts and aspects the user asked to focus on into `project.yaml → focus_requested` (ids of anatomy parts, see step 3) — they are shown with ★ later and must not get lost after the interview.
 
 ## 2. Create
 - Location: a folder `paperkb/` inside the user's project folder unless they want another one.
@@ -23,6 +24,7 @@ Then say in 3–5 lines how you understood the field, which template you will st
 1. `kb.py ingest`, `kb.py stub <sha>` for 10–15 papers the user calls typical (or a spread across folders).
 2. Brief cards for them (see `add-papers.md`).
 3. `kb.py check` → collect `NEW-VOCAB` terms. Propose ONE diff for `domain.yaml`: categories, object types, tags, element roles, functions, link methods, environment entities, quantities + SI units, plot pairs, protocol checklists. Show it as a short list, ask, then write.
+   In the same diff propose `anatomy` (`references/anatomy.md`): the parts of the object, how they connect and what to look at in each; mark which parts the user asked for and **which you suggest** in addition, and why. Also `element_columns` per role.
 4. `kb.py build`, open `notes/Index.md`, explain what was generated (`explain-to-user.md`).
 
 ## 4. Hand over

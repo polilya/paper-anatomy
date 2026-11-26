@@ -17,7 +17,9 @@ tags:                     # free groups of tags (topics); add your own groups
   properties: []
   applications: []
 
-element_roles: []         # roles of parts inside an object, e.g. [shaft, tip, actuator, sensor, insulation]
+element_roles: []
+element_columns: {}       # columns of element tables per role, e.g. {default: [material, geometry, preparation],
+                          #   actuator: [principle, functions, numbers], sensor: [principle, props, numbers]}         # roles of parts inside an object, e.g. [shaft, tip, actuator, sensor, insulation]
 functions: []             # normalised verb phrases, e.g. ["transmit force to the tip", "sense contact force"]
 link_methods: {}          # method: class  — class is one of mechanical, covalent, non-covalent, adhesive,
                           #                  thermal, electrical, fluidic, biological, other
@@ -25,6 +27,7 @@ preparation_methods: []   # how elements are made (only key/non-obvious ones are
 environment_entities: []  # what the object interacts with, e.g. [vessel wall, blood, PBS 37 °C, operator]
 
 quantities: {}            # quantity: SI unit (or "text"); cards must use exactly this unit
+lower_is_better: []       # e.g. [positioning_error, latency]: comparisons by solution put the lowest first
 log_quantities: []        # plotted on a log axis
 plot_pairs: []            # property maps, e.g. [[youngs_modulus, conductivity]]
 
@@ -33,3 +36,12 @@ test_types: [mechanical, electrical, electrochemical, chemical, structural, ther
              stability, biological, in-vivo, clinical, simulation-validation, other]
 
 protocol_checklists: {}   # quantity: [what your own protocol must state], shown on the protocol hub pages
+
+# The studied object as parts → generated notes/anatomy/ (see references/anatomy.md). Optional.
+# anatomy:
+#   object: "steerable catheter"
+#   nodes:
+#     - {id: tip, short: Tip, title: "Bending tip", roles: [tip], quantities: [bending_angle], focus: [bending principle, max angle]}
+#     - {id: drive, short: Drive, roles: [actuator, transmission], functions: [transmit force or torque]}
+#   edges: [[drive, tip]]
+#   solutions: {tendon-driven: {short: Tendons, nodes: [drive]}}
